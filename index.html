@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Agenda de Amaia</title>
+
+  <!-- === TEMA HTML: METADATOS Y PWA === -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#7c5dfa">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+
+  <!-- === TEMA HTML: CABECERA === -->
+  <header class="header">
+    <div class="header-subtitle" id="current-date">Cargando fecha...</div>
+    <div class="header-title">Agenda de Amaia ✨</div>
+  </header>
+
+  <!-- === TEMA HTML: CONTENIDO PRINCIPAL === -->
+  <main class="container">
+
+    <!-- Subtema: Vista Agenda -->
+    <section id="view-agenda" class="view active">
+      <button class="btn-add" id="open-form-btn">
+        <span>＋</span> Añadir tarea o examen
+      </button>
+
+      <!-- Formulario nueva tarea -->
+      <div class="form-card" id="task-form-card">
+        <form id="task-form">
+          <div class="form-group">
+            <label for="task-subject">Asignatura</label>
+            <select id="task-subject" required>
+              <option value="Matemáticas">Matemáticas</option>
+              <option value="Lengua">Lengua y Literatura</option>
+              <option value="Inglés">Inglés</option>
+              <option value="Ciencias">Ciencias</option>
+              <option value="Historia">Historia</option>
+              <option value="Otra">Otra asignatura</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="task-title">Descripción</label>
+            <input type="text" id="task-title" placeholder="Ej: Ejercicios página 42 o Examen tema 3" required>
+          </div>
+
+          <div class="form-group">
+            <label for="task-due">Fecha de entrega / Examen</label>
+            <input type="date" id="task-due" required>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-cancel" id="close-form-btn">Cancelar</button>
+            <button type="submit" class="btn-save">Guardar</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Listado de tareas -->
+      <div class="task-list" id="task-list"></div>
+    </section>
+
+    <!-- Subtema: Vista Materias (Espacio preparado) -->
+    <section id="view-materias" class="view">
+      <div class="empty-state">
+        <p>📚 <b>Módulo de Materias</b></p>
+        <p>Aquí listaremos sus asignaturas, apuntes y notas.</p>
+      </div>
+    </section>
+
+    <!-- Subtema: Vista Diario (Espacio preparado) -->
+    <section id="view-diario" class="view">
+      <div class="empty-state">
+        <p>🔒 <b>Módulo de Diario</b></p>
+        <p>Aquí escribirá sus notas privadas con código PIN.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- === TEMA HTML: NAVEGACIÓN INFERIOR === -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-target="view-agenda">
+      <span class="nav-icon">📅</span>
+      <span>Agenda</span>
+    </button>
+    <button class="nav-item" data-target="view-materias">
+      <span class="nav-icon">📚</span>
+      <span>Materias</span>
+    </button>
+    <button class="nav-item" data-target="view-diario">
+      <span class="nav-icon">🔒</span>
+      <span>Diario</span>
+    </button>
+  </nav>
+
+  <!-- === TEMA HTML: ENLACE A SCRIPT === -->
+  <script src="script.js"></script>
+</body>
+</html>
