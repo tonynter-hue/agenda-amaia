@@ -94,31 +94,25 @@ body {
    TEMA CSS 3: BARRA DE PÉSTANAS (PÍLDORAS)
    =================================================== */
 .nav-pills-bar {
-  display: flex;
-  gap: 8px;
-  padding: 14px 16px;
-  overflow-x: auto;
-  white-space: nowrap;
-  scrollbar-width: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  padding: 14px 12px;
   background-color: var(--bg-app);
-}
-
-.nav-pills-bar::-webkit-scrollbar {
-  display: none;
 }
 
 .pill-btn {
   background: #ffffff;
   color: var(--text-dark);
   border: 1.5px solid var(--border-color);
-  padding: 9px 18px;
-  border-radius: 25px;
-  font-size: 0.82rem;
+  padding: 9px 2px;
+  border-radius: 20px;
+  font-size: clamp(0.64rem, 2.6vw, 0.78rem);
   font-weight: 700;
-  letter-spacing: 0.03em;
+  text-align: center;
   cursor: pointer;
   transition: all 0.2s ease;
-  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .pill-btn.active {
