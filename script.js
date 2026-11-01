@@ -1,7 +1,12 @@
 /* ===================================================
-   TEMA JS 1: CABECERA Y CAMBIO DE FONDO (LOCALSTORAGE)
+   TEMA JS 1: CABECERA, FONDO Y REGISTRO PWA
    =================================================== */
-// 1. Fecha formateada
+// 1. Registro del Service Worker para habilitar la instalación PWA
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
+}
+
+// 2. Fecha formateada
 const dateElement = document.getElementById('current-date');
 const today = new Date();
 dateElement.textContent = today.toLocaleDateString('es-ES', {
@@ -10,7 +15,7 @@ dateElement.textContent = today.toLocaleDateString('es-ES', {
   month: 'long'
 });
 
-// 2. Fondo guardado en el teléfono
+// 3. Fondo guardado en el teléfono
 const heroHeader = document.getElementById('hero-header');
 const coverInput = document.getElementById('cover-input');
 
@@ -31,7 +36,6 @@ coverInput.addEventListener('change', (e) => {
     reader.readAsDataURL(file);
   }
 });
-
 /* ===================================================
    TEMA JS 2: GESTIÓN DE PESTAÑAS (PÍLDORAS)
    =================================================== */
