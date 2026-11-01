@@ -1,6 +1,7 @@
 /* ===================================================
-   TEMA JS 1: INICIALIZACIÓN Y FECHA CABECERA
+   TEMA JS 1: CABECERA Y CAMBIO DE FONDO (LOCALSTORAGE)
    =================================================== */
+// 1. Fecha formateada
 const dateElement = document.getElementById('current-date');
 const today = new Date();
 dateElement.textContent = today.toLocaleDateString('es-ES', {
@@ -9,25 +10,47 @@ dateElement.textContent = today.toLocaleDateString('es-ES', {
   month: 'long'
 });
 
+// 2. Fondo guardado en el teléfono
+const heroHeader = document.getElementById('hero-header');
+const coverInput = document.getElementById('cover-input');
+
+const savedCover = localStorage.getItem('amaia_cover_image');
+if (savedCover) {
+  heroHeader.style.backgroundImage = `url('${savedCover}')`;
+}
+
+coverInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function(event) {
+      const base64Image = event.target.result;
+      heroHeader.style.backgroundImage = `url('${base64Image}')`;
+      localStorage.setItem('amaia_cover_image', base64Image);
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
 /* ===================================================
-   TEMA JS 2: GESTIÓN DE PESTAÑAS / VISTAS
+   TEMA JS 2: GESTIÓN DE PESTAÑAS (PÍLDORAS)
    =================================================== */
-const navItems = document.querySelectorAll('.nav-item');
-const views = document.querySelectorAll('.view');
+const pillButtons = document.querySelectorAll('.pill-btn');
+const viewPanels = document.querySelectorAll('.view-panel');
 
-navItems.forEach(item => {
-  item.addEventListener('click', () => {
-    navItems.forEach(nav => nav.classList.remove('active'));
-    views.forEach(view => view.classList.remove('active'));
+pillButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    pillButtons.forEach(b => b.classList.remove('active'));
+    viewPanels.forEach(p => p.classList.remove('active'));
 
-    item.classList.add('active');
-    const targetId = item.getAttribute('data-target');
+    btn.classList.add('active');
+    const targetId = btn.getAttribute('data-target');
     document.getElementById(targetId).classList.add('active');
   });
 });
 
 /* ===================================================
-   TEMA JS 3: ALMACENAMIENTO Y ESTADO DE TAREAS
+   TEMA JS 3: ALMACENAMIENTO DE TAREAS
    =================================================== */
 let tasks = JSON.parse(localStorage.getItem('amaia_tasks')) || [];
 
@@ -37,7 +60,7 @@ function saveAndRenderTasks() {
 }
 
 /* ===================================================
-   TEMA JS 4: FORMULARIO Y CONTROL DE EVENTOS
+   TEMA JS 4: FORMULARIO DE TAREAS
    =================================================== */
 const formCard = document.getElementById('task-form-card');
 const openFormBtn = document.getElementById('open-form-btn');
@@ -75,27 +98,24 @@ taskForm.addEventListener('submit', (e) => {
 });
 
 /* ===================================================
-   TEMA JS 5: ACCIONES Y RENDERIZADO DE TAREAS
+   TEMA JS 5: ACCIONES Y RENDERIZADO
    =================================================== */
 window.toggleTask = function(id) {
-  tasks = tasks.map(task => {
-    if (task.id === id) task.completed = !task.completed;
-    return task;
-  });
+  tasks = tasks.map(t => (t.id === id ? { ...t, completed: !t.completed } : t));
   saveAndRenderTasks();
 };
 
 window.deleteTask = function(id) {
-  tasks = tasks.filter(task => task.id !== id);
+  tasks = tasks.filter(t => t.id !== id);
   saveAndRenderTasks();
 };
 
 function renderTasks() {
   if (tasks.length === 0) {
     taskList.innerHTML = `
-      <div class="empty-state">
+      <div class="placeholder-box">
         <p>🎉 ¡No tienes tareas pendientes!</p>
-        <p style="font-size: 0.85rem; margin-top: 6px;">Pulsa el botón superior para apuntar tareas.</p>
+        <p style="font-size: 0.85rem; margin-top: 4px;">Pulsa el botón de arriba para apuntar deberes o exámenes.</p>
       </div>
     `;
     return;
@@ -125,5 +145,4 @@ function renderTasks() {
   }).join('');
 }
 
-// Carga inicial
 renderTasks();

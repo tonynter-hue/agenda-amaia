@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Agenda de Amaia</title>
 
-  <!-- === TEMA HTML: METADATOS Y PWA === -->
+  <!-- === TEMA HTML 1: METADATOS Y PWA === -->
   <link rel="manifest" href="manifest.json">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,22 +14,39 @@
 </head>
 <body>
 
-  <!-- === TEMA HTML: CABECERA === -->
-  <header class="header">
-    <div class="header-subtitle" id="current-date">Cargando fecha...</div>
-    <div class="header-title">Agenda de Amaia ✨</div>
+  <!-- === TEMA HTML 2: CABECERA CON IMAGEN Y CAMBIO DE FONDO === -->
+  <header class="hero-header" id="hero-header">
+    <div class="hero-overlay"></div>
+    <label class="btn-change-cover" for="cover-input" title="Cambiar portada">
+      📷 <span>Cambiar fondo</span>
+    </label>
+    <input type="file" id="cover-input" accept="image/*" style="display: none;">
+    <div class="hero-info">
+      <h1 class="hero-title">Espacio de Amaia ✨</h1>
+      <p class="hero-date" id="current-date">Cargando fecha...</p>
+    </div>
   </header>
 
-  <!-- === TEMA HTML: CONTENIDO PRINCIPAL === -->
-  <main class="container">
+  <!-- === TEMA HTML 3: NAVEGACIÓN SUPERIOR (PÍLDORAS) === -->
+  <nav class="nav-pills-bar">
+    <button class="pill-btn active" data-target="view-agenda">AGENDA</button>
+    <button class="pill-btn" data-target="view-asignaturas">ASIGNATURAS</button>
+    <button class="pill-btn" data-target="view-youtube">YOUTUBE</button>
+    <button class="pill-btn" data-target="view-calendario">CALENDARIO</button>
+  </nav>
+
+  <!-- === TEMA HTML 4: CONTENEDOR Y VISTAS === -->
+  <main class="main-card">
 
     <!-- Subtema: Vista Agenda -->
-    <section id="view-agenda" class="view active">
+    <section id="view-agenda" class="view-panel active">
+      <h2 class="section-title">AGENDA</h2>
+
       <button class="btn-add" id="open-form-btn">
         <span>＋</span> Añadir tarea o examen
       </button>
 
-      <!-- Formulario nueva tarea -->
+      <!-- Formulario para nueva tarea -->
       <div class="form-card" id="task-form-card">
         <form id="task-form">
           <div class="form-group">
@@ -46,7 +63,7 @@
 
           <div class="form-group">
             <label for="task-title">Descripción</label>
-            <input type="text" id="task-title" placeholder="Ej: Ejercicios página 42 o Examen tema 3" required>
+            <input type="text" id="task-title" placeholder="Ej: Ejercicios pág 42 o Examen tema 3" required>
           </div>
 
           <div class="form-group">
@@ -65,41 +82,36 @@
       <div class="task-list" id="task-list"></div>
     </section>
 
-    <!-- Subtema: Vista Materias (Espacio preparado) -->
-    <section id="view-materias" class="view">
-      <div class="empty-state">
-        <p>📚 <b>Módulo de Materias</b></p>
-        <p>Aquí listaremos sus asignaturas, apuntes y notas.</p>
+    <!-- Subtema: Vista Asignaturas -->
+    <section id="view-asignaturas" class="view-panel">
+      <h2 class="section-title">ASIGNATURAS</h2>
+      <div class="placeholder-box">
+        <p>📚 <b>Tus Asignaturas</b></p>
+        <p>Aquí gestionaremos temas, apuntes y notas trimestrales.</p>
       </div>
     </section>
 
-    <!-- Subtema: Vista Diario (Espacio preparado) -->
-    <section id="view-diario" class="view">
-      <div class="empty-state">
-        <p>🔒 <b>Módulo de Diario</b></p>
-        <p>Aquí escribirá sus notas privadas con código PIN.</p>
+    <!-- Subtema: Vista YouTube -->
+    <section id="view-youtube" class="view-panel">
+      <h2 class="section-title">YOUTUBE</h2>
+      <div class="placeholder-box">
+        <p>🎬 <b>Canal & Vídeos de Estudio</b></p>
+        <p>Aquí incrustaremos sus vídeos, música de estudio y accesos directos.</p>
+      </div>
+    </section>
+
+    <!-- Subtema: Vista Calendario -->
+    <section id="view-calendario" class="view-panel">
+      <h2 class="section-title">CALENDARIO</h2>
+      <div class="placeholder-box">
+        <p>🗓️ <b>Calendario Escolar</b></p>
+        <p>Vista mensual de exámenes y entregas importantes.</p>
       </div>
     </section>
 
   </main>
 
-  <!-- === TEMA HTML: NAVEGACIÓN INFERIOR === -->
-  <nav class="bottom-nav">
-    <button class="nav-item active" data-target="view-agenda">
-      <span class="nav-icon">📅</span>
-      <span>Agenda</span>
-    </button>
-    <button class="nav-item" data-target="view-materias">
-      <span class="nav-icon">📚</span>
-      <span>Materias</span>
-    </button>
-    <button class="nav-item" data-target="view-diario">
-      <span class="nav-icon">🔒</span>
-      <span>Diario</span>
-    </button>
-  </nav>
-
-  <!-- === TEMA HTML: ENLACE A SCRIPT === -->
+  <!-- === TEMA HTML 5: VÍNCULO A SCRIPTS === -->
   <script src="script.js"></script>
 </body>
 </html>
