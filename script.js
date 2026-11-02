@@ -1,13 +1,12 @@
 /* ===================================================
-   TEMA JS 1: CABECERA, MENÚ 3 PUNTOS Y FONDO
+   TEMA JS 1: PWA, FECHA Y FONDO PERSONALIZABLE
    =================================================== */
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
 const dateElement = document.getElementById('current-date');
-const today = new Date();
-dateElement.textContent = today.toLocaleDateString('es-ES', {
+dateElement.textContent = new Date().toLocaleDateString('es-ES', {
   weekday: 'long',
   day: 'numeric',
   month: 'long'
@@ -15,35 +14,27 @@ dateElement.textContent = today.toLocaleDateString('es-ES', {
 
 const menuDotsBtn = document.getElementById('menu-dots-btn');
 const menuDropdown = document.getElementById('menu-dropdown');
-
 if (menuDotsBtn && menuDropdown) {
   menuDotsBtn.addEventListener('click', (e) => {
     e.stopPropagation();
     menuDropdown.classList.toggle('show');
   });
-
-  document.addEventListener('click', () => {
-    menuDropdown.classList.remove('show');
-  });
+  document.addEventListener('click', () => menuDropdown.classList.remove('show'));
 }
 
 const heroHeader = document.getElementById('hero-header');
 const coverInput = document.getElementById('cover-input');
-
 const savedCover = localStorage.getItem('amaia_cover_image');
-if (savedCover && heroHeader) {
-  heroHeader.style.backgroundImage = `url('${savedCover}')`;
-}
+if (savedCover && heroHeader) heroHeader.style.backgroundImage = `url('${savedCover}')`;
 
 if (coverInput && heroHeader) {
   coverInput.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onload = function(event) {
-        const base64Image = event.target.result;
-        heroHeader.style.backgroundImage = `url('${base64Image}')`;
-        localStorage.setItem('amaia_cover_image', base64Image);
+      reader.onload = (event) => {
+        heroHeader.style.backgroundImage = `url('${event.target.result}')`;
+        localStorage.setItem('amaia_cover_image', event.target.result);
         if (menuDropdown) menuDropdown.classList.remove('show');
       };
       reader.readAsDataURL(file);
@@ -52,7 +43,7 @@ if (coverInput && heroHeader) {
 }
 
 /* ===================================================
-   TEMA JS 2: GESTIÓN DE PESTAÑAS (PÍLDORAS)
+   TEMA JS 2: CAMBIO DE PESTAÑAS (PÍLDORAS)
    =================================================== */
 const pillButtons = document.querySelectorAll('.pill-btn');
 const viewPanels = document.querySelectorAll('.view-panel');
@@ -63,22 +54,18 @@ pillButtons.forEach(btn => {
     viewPanels.forEach(p => p.classList.remove('active'));
 
     btn.classList.add('active');
-    const targetId = btn.getAttribute('data-target');
-    const targetView = document.getElementById(targetId);
-    if (targetView) targetView.classList.add('active');
+    const target = document.getElementById(btn.getAttribute('data-target'));
+    if (target) target.classList.add('active');
 
-    // Si entra en Asignaturas, volver siempre a la lista principal
-    if (targetId === 'view-asignaturas') {
-      const listScreen = document.getElementById('subjects-list-screen');
-      const detailScreen = document.getElementById('subject-detail-screen');
-      if (listScreen) listScreen.style.display = 'block';
-      if (detailScreen) detailScreen.style.display = 'none';
+    if (btn.getAttribute('data-target') === 'view-asignaturas') {
+      document.getElementById('subjects-list-screen').style.display = 'block';
+      document.getElementById('subject-detail-screen').style.display = 'none';
     }
   });
 });
 
 /* ===================================================
-   TEMA JS 3: CONEXIÓN CON FIREBASE CLOUD
+   TEMA JS 3: BASE DE DATOS FIREBASE
    =================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAjklSkVXN1bM-mJUArpi6-YP-wmY7DZn8",
@@ -93,39 +80,24 @@ firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 db.enablePersistence().catch(() => {});
 
-let tasks = [];
-
-db.collection('tasks').orderBy('id', 'desc').onSnapshot((snapshot) => {
-  tasks = [];
-  snapshot.forEach((doc) => {
-    tasks.push(doc.data());
-  });
-  renderTasks();
-});
-
 /* ===================================================
-   TEMA JS 4: FORMULARIO DE TAREAS
+   TEMA JS 4: GESTIÓN DE TAREAS (AGENDA)
    =================================================== */
+let tasks = [];
 const formCard = document.getElementById('task-form-card');
 const openFormBtn = document.getElementById('open-form-btn');
 const closeFormBtn = document.getElementById('close-form-btn');
 const taskForm = document.getElementById('task-form');
 const taskList = document.getElementById('task-list');
 
-if (openFormBtn && formCard) {
-  openFormBtn.addEventListener('click', () => {
-    formCard.classList.add('visible');
-    openFormBtn.style.display = 'none';
-  });
-}
+if (openFormBtn) openFormBtn.addEventListener('click', () => { formCard.classList.add('visible'); openFormBtn.style.display = 'none'; });
+if (closeFormBtn) closeFormBtn.addEventListener('click', () => { formCard.classList.remove('visible'); openFormBtn.style.display = 'flex'; taskForm.reset(); });
 
-if (closeFormBtn && formCard && openFormBtn && taskForm) {
-  closeFormBtn.addEventListener('click', () => {
-    formCard.classList.remove('visible');
-    openFormBtn.style.display = 'flex';
-    taskForm.reset();
-  });
-}
+db.collection('tasks').orderBy('id', 'desc').onSnapshot((snapshot) => {
+  tasks = [];
+  snapshot.forEach(doc => tasks.push(doc.data()));
+  renderTasks();
+});
 
 if (taskForm) {
   taskForm.addEventListener('submit', async (e) => {
@@ -137,74 +109,43 @@ if (taskForm) {
       dueDate: document.getElementById('task-due').value,
       completed: false
     };
-
-    try {
-      await db.collection('tasks').doc(String(newTask.id)).set(newTask);
-      taskForm.reset();
-      formCard.classList.remove('visible');
-      openFormBtn.style.display = 'flex';
-    } catch (error) {
-      console.error("Error al guardar tarea:", error);
-    }
+    await db.collection('tasks').doc(String(newTask.id)).set(newTask);
+    taskForm.reset();
+    formCard.classList.remove('visible');
+    openFormBtn.style.display = 'flex';
   });
 }
 
-/* ===================================================
-   TEMA JS 5: ACCIONES Y RENDERIZADO DE TAREAS
-   =================================================== */
 window.toggleTask = async function(id) {
-  const currentTask = tasks.find(t => t.id === id);
-  if (currentTask) {
-    await db.collection('tasks').doc(String(id)).update({
-      completed: !currentTask.completed
-    });
-  }
+  const current = tasks.find(t => t.id === id);
+  if (current) await db.collection('tasks').doc(String(id)).update({ completed: !current.completed });
 };
 
 window.deleteTask = async function(id) {
-  if (confirm('¿Eliminar esta tarea?')) {
-    await db.collection('tasks').doc(String(id)).delete();
-  }
+  if (confirm('¿Eliminar esta tarea?')) await db.collection('tasks').doc(String(id)).delete();
 };
 
 function renderTasks() {
   if (!taskList) return;
   if (tasks.length === 0) {
-    taskList.innerHTML = `
-      <div class="placeholder-box">
-        <p>🎉 ¡No tienes tareas pendientes!</p>
-        <p style="font-size: 0.85rem; margin-top: 4px;">Pulsa el botón de arriba para apuntar deberes o exámenes.</p>
-      </div>
-    `;
+    taskList.innerHTML = `<div class="placeholder-box"><p>🎉 ¡No tienes tareas pendientes!</p></div>`;
     return;
   }
-
-  taskList.innerHTML = tasks.map(task => {
-    const dateFormatted = task.dueDate 
-      ? new Date(task.dueDate + 'T00:00:00').toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
-      : 'Sin fecha';
-
-    return `
-      <article class="task-item ${task.completed ? 'completed' : ''}">
-        <input 
-          type="checkbox" 
-          class="task-checkbox" 
-          ${task.completed ? 'checked' : ''} 
-          onchange="toggleTask(${task.id})"
-        >
-        <div class="task-info">
-          <span class="task-subject">${task.subject}</span>
-          <div class="task-text">${task.title}</div>
-          <div class="task-date">📅 Entrega: ${dateFormatted}</div>
-        </div>
-        <button class="btn-delete" onclick="deleteTask(${task.id})" title="Borrar">✕</button>
-      </article>
-    `;
-  }).join('');
+  taskList.innerHTML = tasks.map(t => `
+    <article class="task-item ${t.completed ? 'completed' : ''}">
+      <input type="checkbox" class="task-checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
+      <div class="task-info">
+        <span class="task-subject">${t.subject}</span>
+        <div class="task-text">${t.title}</div>
+        <div class="task-date">📅 ${t.dueDate || 'Sin fecha'}</div>
+      </div>
+      <button class="btn-delete" onclick="deleteTask(${t.id})">✕</button>
+    </article>
+  `).join('');
 }
 
 /* ===================================================
-   TEMA JS 6: ASIGNATURAS, APUNTES AISLADOS Y ORDEN
+   TEMA JS 5: ASIGNATURAS Y ARRASTRAR (DRAG & DROP)
    =================================================== */
 const DEFAULT_SUBJECTS = [
   { id: 'frances', name: 'FRANCÉS 6ºB', course: '2026/2027', prof: 'María Sánchez González', color: 'linear-gradient(135deg, #1e3c72, #2a5298)' },
@@ -230,310 +171,210 @@ const PRESET_COLORS = [
 
 let subjectsList = [...DEFAULT_SUBJECTS];
 let activeSubject = null;
-let editingSubjectId = null;
 let editingIndex = -1;
 let selectedColorValue = '';
-let currentSelectedPhotoBase64 = null;
-let unsubscribeNotes = null;
-
 const classroomGrid = document.getElementById('classroom-grid');
-const subjectsListScreen = document.getElementById('subjects-list-screen');
-const subjectDetailScreen = document.getElementById('subject-detail-screen');
-const btnBackSubjects = document.getElementById('btn-back-subjects');
-const detailBanner = document.getElementById('detail-banner');
-const detailTitle = document.getElementById('detail-title');
-const detailCourseProf = document.getElementById('detail-course-prof');
-const noteTextInput = document.getElementById('note-text');
-const notePhotoInput = document.getElementById('note-photo-input');
-const photoPreviewName = document.getElementById('photo-preview-name');
-const btnSaveNote = document.getElementById('btn-save-note');
-const subjectNotesList = document.getElementById('subject-notes-list');
 
-const modalPhotoViewer = document.getElementById('modal-photo-viewer');
-const modalExpandedImg = document.getElementById('modal-expanded-img');
-const btnClosePhoto = document.getElementById('btn-close-photo');
-
-const modalEditSubject = document.getElementById('modal-edit-subject');
-const formEditSubject = document.getElementById('form-edit-subject');
-const editSubName = document.getElementById('edit-sub-name');
-const editSubCourse = document.getElementById('edit-sub-course');
-const editSubProf = document.getElementById('edit-sub-prof');
-const btnCancelEditSub = document.getElementById('btn-cancel-edit-sub');
-const colorPalette = document.getElementById('color-palette');
-const editSubColorPicker = document.getElementById('edit-sub-color-picker');
-const btnMoveUp = document.getElementById('btn-move-up');
-const btnMoveDown = document.getElementById('btn-move-down');
+function initSortableDrag() {
+  if (!classroomGrid || typeof Sortable === 'undefined') return;
+  new Sortable(classroomGrid, {
+    animation: 200,
+    delay: 150,
+    delayOnTouchOnly: true,
+    filter: '.btn-sub-menu',
+    preventOnFilter: true,
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    onEnd: async (evt) => {
+      const moved = subjectsList.splice(evt.oldIndex, 1)[0];
+      subjectsList.splice(evt.newIndex, 0, moved);
+      await db.collection('config').doc('subjects_list').set({ items: subjectsList });
+    }
+  });
+}
 
 function renderClassroomCards() {
   if (!classroomGrid) return;
-  classroomGrid.innerHTML = subjectsList.map((sub, index) => `
-    <article class="classroom-card" style="background: ${sub.color}" onclick="openSubjectDetail('${sub.id}')">
+  classroomGrid.innerHTML = subjectsList.map((s, i) => `
+    <article class="classroom-card" style="background: ${s.color}" onclick="openSubjectDetail('${s.id}')">
       <div class="classroom-card-top">
         <div>
-          <div class="classroom-card-title">${sub.name}</div>
-          <div class="classroom-card-course">${sub.course}</div>
+          <div class="classroom-card-title">${s.name}</div>
+          <div class="classroom-card-course">${s.course}</div>
         </div>
-        <button class="btn-sub-menu" onclick="openEditModal(event, '${sub.id}', ${index})" title="Personalizar">⋮</button>
+        <button class="btn-sub-menu" onclick="openEditModal(event, ${i})">⋮</button>
       </div>
-      <div class="classroom-card-prof">${sub.prof}</div>
+      <div class="classroom-card-prof">${s.prof}</div>
     </article>
   `).join('');
+  initSortableDrag();
 }
 
-// Pintar de inmediato sin esperar red
 renderClassroomCards();
 
 db.collection('config').doc('subjects_list').onSnapshot((doc) => {
-  if (doc.exists && doc.data().items && doc.data().items.length > 0) {
-    subjectsList = doc.data().items;
-  } else {
-    db.collection('config').doc('subjects_list').set({ items: DEFAULT_SUBJECTS });
-  }
+  if (doc.exists && doc.data().items) subjectsList = doc.data().items;
+  else db.collection('config').doc('subjects_list').set({ items: DEFAULT_SUBJECTS });
   renderClassroomCards();
 });
 
-window.openSubjectDetail = function(subjectId) {
-  activeSubject = subjectsList.find(s => s.id === subjectId);
-  if (!activeSubject) return;
+// Modal de edición de materia
+const modalEdit = document.getElementById('modal-edit-subject');
+const formEdit = document.getElementById('form-edit-subject');
+const palette = document.getElementById('color-palette');
 
-  if (subjectNotesList) {
-    subjectNotesList.innerHTML = '<div class="placeholder-box"><p>Cargando apuntes...</p></div>';
-  }
-
-  if (detailTitle) detailTitle.textContent = activeSubject.name;
-  if (detailCourseProf) detailCourseProf.textContent = `${activeSubject.course} • ${activeSubject.prof}`;
-  if (detailBanner) detailBanner.style.background = activeSubject.color;
-
-  if (subjectsListScreen) subjectsListScreen.style.display = 'none';
-  if (subjectDetailScreen) subjectDetailScreen.style.display = 'block';
-
-  if (unsubscribeNotes) unsubscribeNotes();
-
-  unsubscribeNotes = db.collection('notes_' + activeSubject.id)
-    .orderBy('timestamp', 'desc')
-    .onSnapshot((snapshot) => {
-      const notes = [];
-      snapshot.forEach(doc => {
-        notes.push({ id: doc.id, ...doc.data() });
-      });
-      renderSubjectNotes(notes);
-    }, (err) => {
-      console.error("Error al escuchar notas:", err);
-    });
-};
-
-if (btnBackSubjects) {
-  btnBackSubjects.addEventListener('click', () => {
-    if (subjectDetailScreen) subjectDetailScreen.style.display = 'none';
-    if (subjectsListScreen) subjectsListScreen.style.display = 'block';
-    if (unsubscribeNotes) unsubscribeNotes();
-    activeSubject = null;
-  });
-}
-
-if (notePhotoInput) {
-  notePhotoInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 850;
-        let w = img.width, h = img.height;
-        if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-        else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-
-        canvas.width = w; canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, w, h);
-        currentSelectedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.60);
-        if (photoPreviewName) photoPreviewName.style.display = 'inline';
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
-}
-
-if (btnSaveNote) {
-  btnSaveNote.addEventListener('click', async () => {
-    const text = noteTextInput ? noteTextInput.value.trim() : '';
-    if (!text && !currentSelectedPhotoBase64) {
-      alert('Escribe algo o saca una foto antes de publicar.');
-      return;
-    }
-
-    btnSaveNote.disabled = true;
-    btnSaveNote.textContent = 'Guardando...';
-
-    try {
-      await db.collection('notes_' + activeSubject.id).add({
-        text: text,
-        photo: currentSelectedPhotoBase64 || null,
-        dateString: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
-        timestamp: Date.now()
-      });
-
-      if (noteTextInput) noteTextInput.value = '';
-      currentSelectedPhotoBase64 = null;
-      if (notePhotoInput) notePhotoInput.value = '';
-      if (photoPreviewName) photoPreviewName.style.display = 'none';
-    } catch (err) {
-      console.error('Error al guardar nota:', err);
-      alert('No se pudo guardar la nota.');
-    } finally {
-      btnSaveNote.disabled = false;
-      btnSaveNote.textContent = 'Publicar en la asignatura';
-    }
-  });
-}
-
-window.deleteNote = async function(e, noteId) {
-  if (e) e.stopPropagation();
-  if (confirm('¿Eliminar este apunte de forma definitiva?')) {
-    await db.collection('notes_' + activeSubject.id).doc(noteId).delete();
-  }
-};
-
-window.expandPhoto = function(photoSrc) {
-  if (modalExpandedImg && modalPhotoViewer) {
-    modalExpandedImg.src = photoSrc;
-    modalPhotoViewer.style.display = 'flex';
-  }
-};
-
-if (btnClosePhoto && modalPhotoViewer && modalExpandedImg) {
-  btnClosePhoto.addEventListener('click', () => {
-    modalPhotoViewer.style.display = 'none';
-    modalExpandedImg.src = '';
-  });
-
-  modalPhotoViewer.addEventListener('click', (e) => {
-    if (e.target !== modalExpandedImg) {
-      modalPhotoViewer.style.display = 'none';
-      modalExpandedImg.src = '';
-    }
-  });
-}
-
-function renderSubjectNotes(notes) {
-  if (!subjectNotesList) return;
-  if (notes.length === 0) {
-    subjectNotesList.innerHTML = `
-      <div class="placeholder-box" style="padding: 25px 10px;">
-        <p>📝 No hay apuntes en esta materia todavía.</p>
-        <p style="font-size: 0.8rem; margin-top: 4px;">Usa el recuadro superior para apuntar o fotografiar la pizarra.</p>
-      </div>
-    `;
-    return;
-  }
-
-  subjectNotesList.innerHTML = notes.map(note => `
-    <article class="note-entry-card">
-      <div class="note-entry-header">
-        <span>📅 ${note.dateString}</span>
-        <button class="btn-delete-note" onclick="deleteNote(event, '${note.id}')">Eliminar</button>
-      </div>
-      ${note.text ? `<div class="note-entry-text">${note.text}</div>` : ''}
-      ${note.photo ? `
-        <div class="note-entry-img-container">
-          <img src="${note.photo}" class="note-entry-img" alt="Apunte" onclick="expandPhoto('${note.photo}')">
-        </div>
-      ` : ''}
-    </article>
-  `).join('');
-}
-
-window.openEditModal = function(e, subId, index) {
+window.openEditModal = function(e, index) {
   e.stopPropagation();
-  editingSubjectId = subId;
   editingIndex = index;
-  const sub = subjectsList[index];
-  if (!sub) return;
+  const s = subjectsList[index];
+  document.getElementById('edit-sub-name').value = s.name;
+  document.getElementById('edit-sub-course').value = s.course;
+  document.getElementById('edit-sub-prof').value = s.prof;
+  selectedColorValue = s.color;
 
-  if (editSubName) editSubName.value = sub.name;
-  if (editSubCourse) editSubCourse.value = sub.course;
-  if (editSubProf) editSubProf.value = sub.prof;
-  selectedColorValue = sub.color;
-
-  if (colorPalette) {
-    colorPalette.innerHTML = PRESET_COLORS.map(c => `
-      <div class="color-circle ${c === sub.color ? 'selected' : ''}" style="background: ${c}" onclick="selectPresetColor('${c}', this)"></div>
-    `).join('');
-  }
-
-  if (modalEditSubject) modalEditSubject.style.display = 'flex';
+  palette.innerHTML = PRESET_COLORS.map(c => `
+    <div class="color-circle ${c === s.color ? 'selected' : ''}" style="background: ${c}" onclick="selectColor('${c}', this)"></div>
+  `).join('');
+  modalEdit.style.display = 'flex';
 };
 
-window.selectPresetColor = function(color, el) {
+window.selectColor = function(color, el) {
   selectedColorValue = color;
   document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
   if (el) el.classList.add('selected');
 };
 
-if (editSubColorPicker) {
-  editSubColorPicker.addEventListener('input', (e) => {
-    selectedColorValue = e.target.value;
-    document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+document.getElementById('edit-sub-color-picker').addEventListener('input', (e) => {
+  selectedColorValue = e.target.value;
+  document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+});
+
+document.getElementById('btn-cancel-edit-sub').addEventListener('click', () => modalEdit.style.display = 'none');
+
+formEdit.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (editingIndex === -1) return;
+  subjectsList[editingIndex] = {
+    ...subjectsList[editingIndex],
+    name: document.getElementById('edit-sub-name').value.trim(),
+    course: document.getElementById('edit-sub-course').value.trim(),
+    prof: document.getElementById('edit-sub-prof').value.trim(),
+    color: selectedColorValue
+  };
+  await db.collection('config').doc('subjects_list').set({ items: subjectsList });
+  modalEdit.style.display = 'none';
+});
+
+/* ===================================================
+   TEMA JS 6: APUNTES, FOTOS Y VISOR MODAL
+   =================================================== */
+let unsubscribeNotes = null;
+let currentPhotoBase64 = null;
+const notesContainer = document.getElementById('subject-notes-list');
+const photoInput = document.getElementById('note-photo-input');
+const photoBadge = document.getElementById('photo-preview-name');
+const btnSaveNote = document.getElementById('btn-save-note');
+const noteArea = document.getElementById('note-text');
+
+window.openSubjectDetail = function(subjectId) {
+  activeSubject = subjectsList.find(s => s.id === subjectId);
+  if (!activeSubject) return;
+
+  notesContainer.innerHTML = '<div class="placeholder-box"><p>Cargando apuntes...</p></div>';
+  document.getElementById('detail-title').textContent = activeSubject.name;
+  document.getElementById('detail-course-prof').textContent = `${activeSubject.course} • ${activeSubject.prof}`;
+  document.getElementById('detail-banner').style.background = activeSubject.color;
+
+  document.getElementById('subjects-list-screen').style.display = 'none';
+  document.getElementById('subject-detail-screen').style.display = 'block';
+
+  if (unsubscribeNotes) unsubscribeNotes();
+  unsubscribeNotes = db.collection('notes_' + activeSubject.id).orderBy('timestamp', 'desc').onSnapshot((snap) => {
+    const notes = [];
+    snap.forEach(doc => notes.push({ id: doc.id, ...doc.data() }));
+    renderSubjectNotes(notes);
   });
-}
+};
 
-if (btnMoveUp) {
-  btnMoveUp.addEventListener('click', async () => {
-    if (editingIndex > 0) {
-      const temp = subjectsList[editingIndex];
-      subjectsList[editingIndex] = subjectsList[editingIndex - 1];
-      subjectsList[editingIndex - 1] = temp;
-      editingIndex--;
-      renderClassroomCards();
-      await db.collection('config').doc('subjects_list').set({ items: subjectsList });
-    }
-  });
-}
+document.getElementById('btn-back-subjects').addEventListener('click', () => {
+  document.getElementById('subject-detail-screen').style.display = 'none';
+  document.getElementById('subjects-list-screen').style.display = 'block';
+  if (unsubscribeNotes) unsubscribeNotes();
+  activeSubject = null;
+});
 
-if (btnMoveDown) {
-  btnMoveDown.addEventListener('click', async () => {
-    if (editingIndex < subjectsList.length - 1) {
-      const temp = subjectsList[editingIndex];
-      subjectsList[editingIndex] = subjectsList[editingIndex + 1];
-      subjectsList[editingIndex + 1] = temp;
-      editingIndex++;
-      renderClassroomCards();
-      await db.collection('config').doc('subjects_list').set({ items: subjectsList });
-    }
-  });
-}
-
-if (btnCancelEditSub && modalEditSubject) {
-  btnCancelEditSub.addEventListener('click', () => {
-    modalEditSubject.style.display = 'none';
-    editingSubjectId = null;
-  });
-}
-
-if (formEditSubject) {
-  formEditSubject.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (editingIndex === -1) return;
-
-    subjectsList[editingIndex] = {
-      ...subjectsList[editingIndex],
-      name: editSubName.value.trim(),
-      course: editSubCourse.value.trim(),
-      prof: editSubProf.value.trim(),
-      color: selectedColorValue
+// Comprimir foto
+photoInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 850;
+      let w = img.width, h = img.height;
+      if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+      else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.60);
+      photoBadge.style.display = 'inline';
     };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
 
-    try {
-      renderClassroomCards();
-      await db.collection('config').doc('subjects_list').set({ items: subjectsList });
-      if (modalEditSubject) modalEditSubject.style.display = 'none';
-      editingSubjectId = null;
-    } catch (err) {
-      console.error("Error al actualizar asignatura:", err);
-    }
+// Guardar apunte
+btnSaveNote.addEventListener('click', async () => {
+  const text = noteArea.value.trim();
+  if (!text && !currentPhotoBase64) return alert('Escribe algo o saca una foto.');
+  btnSaveNote.disabled = true;
+  await db.collection('notes_' + activeSubject.id).add({
+    text: text,
+    photo: currentPhotoBase64 || null,
+    dateString: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+    timestamp: Date.now()
   });
+  noteArea.value = '';
+  currentPhotoBase64 = null;
+  photoInput.value = '';
+  photoBadge.style.display = 'none';
+  btnSaveNote.disabled = false;
+});
+
+window.deleteNote = async function(e, id) {
+  e.stopPropagation();
+  if (confirm('¿Eliminar este apunte?')) await db.collection('notes_' + activeSubject.id).doc(id).delete();
+};
+
+window.expandPhoto = function(src) {
+  document.getElementById('modal-expanded-img').src = src;
+  document.getElementById('modal-photo-viewer').style.display = 'flex';
+};
+
+document.getElementById('btn-close-photo').addEventListener('click', () => {
+  document.getElementById('modal-photo-viewer').style.display = 'none';
+});
+
+function renderSubjectNotes(notes) {
+  if (notes.length === 0) {
+    notesContainer.innerHTML = `<div class="placeholder-box" style="padding:25px 10px;"><p>📝 No hay apuntes todavía en esta materia.</p></div>`;
+    return;
+  }
+  notesContainer.innerHTML = notes.map(n => `
+    <article class="note-entry-card">
+      <div class="note-entry-header">
+        <span>📅 ${n.dateString}</span>
+        <button class="btn-delete-note" onclick="deleteNote(event, '${n.id}')">Eliminar</button>
+      </div>
+      ${n.text ? `<div class="note-entry-text">${n.text}</div>` : ''}
+      ${n.photo ? `
+        <div class="note-entry-img-container">
+          <img src="${n.photo}" class="note-entry-img" alt="Foto" onclick="expandPhoto('${n.photo}')">
+        </div>
+      ` : ''}
+    </article>
+  `).join('');
 }

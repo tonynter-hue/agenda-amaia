@@ -14,16 +14,13 @@
 </head>
 <body>
 
-  <!-- === TEMA HTML 2: CABECERA CON IMAGEN Y MENÚ 3 PUNTOS === -->
+  <!-- === TEMA HTML 2: CABECERA Y MENÚ === -->
   <header class="hero-header" id="hero-header">
     <div class="hero-overlay"></div>
-    
     <div class="menu-container">
       <button class="btn-menu-dots" id="menu-dots-btn" aria-label="Opciones">⋮</button>
       <div class="menu-dropdown" id="menu-dropdown">
-        <label class="menu-item" for="cover-input">
-          📷 Cambiar fondo
-        </label>
+        <label class="menu-item" for="cover-input">📷 Cambiar fondo</label>
       </div>
     </div>
     <input type="file" id="cover-input" accept="image/*" style="display: none;">
@@ -34,7 +31,7 @@
     </div>
   </header>
 
-  <!-- === TEMA HTML 3: NAVEGACIÓN SUPERIOR (PÍLDORAS) === -->
+  <!-- === TEMA HTML 3: BARRA DE PESTAÑAS === -->
   <nav class="nav-pills-bar">
     <button class="pill-btn active" data-target="view-agenda">AGENDA</button>
     <button class="pill-btn" data-target="view-asignaturas">ASIGNATURAS</button>
@@ -42,16 +39,11 @@
     <button class="pill-btn" data-target="view-calendario">CALENDARIO</button>
   </nav>
 
-  <!-- === TEMA HTML 4: CONTENEDOR Y VISTAS === -->
+  <!-- === TEMA HTML 4: VISTA AGENDA === -->
   <main class="main-card">
-
-    <!-- Subtema 4.1: Vista Agenda -->
     <section id="view-agenda" class="view-panel active">
       <h2 class="section-title">AGENDA</h2>
-
-      <button class="btn-add" id="open-form-btn">
-        <span>＋</span> Añadir tarea o examen
-      </button>
+      <button class="btn-add" id="open-form-btn"><span>＋</span> Añadir tarea o examen</button>
 
       <div class="form-card" id="task-form-card">
         <form id="task-form">
@@ -68,82 +60,115 @@
               <option value="Inglés">Inglés</option>
             </select>
           </div>
-
           <div class="form-group">
             <label for="task-title">Descripción</label>
-            <input type="text" id="task-title" placeholder="Ej: Ejercicios pág 42 o Examen tema 3" required>
+            <input type="text" id="task-title" placeholder="Ej: Ejercicios tema 3" required>
           </div>
-
           <div class="form-group">
-            <label for="task-due">Fecha de entrega / Examen</label>
+            <label for="task-due">Fecha de entrega</label>
             <input type="date" id="task-due" required>
           </div>
-
           <div class="form-actions">
             <button type="button" class="btn-cancel" id="close-form-btn">Cancelar</button>
             <button type="submit" class="btn-save">Guardar</button>
           </div>
         </form>
       </div>
-
       <div class="task-list" id="task-list"></div>
     </section>
 
-    <!-- Subtema 4.2: Vista Asignaturas -->
+    <!-- === TEMA HTML 5: VISTA ASIGNATURAS === -->
     <section id="view-asignaturas" class="view-panel">
-      <!-- 1. Pantalla de listado -->
+      <!-- 5.1 Lista de tarjetas -->
       <div id="subjects-list-screen">
         <h2 class="section-title">MIS ASIGNATURAS</h2>
         <div class="classroom-grid" id="classroom-grid"></div>
       </div>
 
-      <!-- 2. Pantalla detalle de la materia -->
-      <div id="subject-detail-screen" class="subject-detail" style="display: none;">
+      <!-- 5.2 Detalle y apuntes de la asignatura -->
+      <div id="subject-detail-screen" style="display: none;">
         <button class="btn-back-subjects" id="btn-back-subjects">← Volver a asignaturas</button>
-        
         <div class="subject-header-banner" id="detail-banner">
-          <h2 id="detail-title">Nombre Asignatura</h2>
+          <h2 id="detail-title">Asignatura</h2>
           <p id="detail-course-prof">Curso • Profesor</p>
         </div>
 
         <div class="note-input-card">
-          <textarea id="note-text" placeholder="Escribe un apunte, resumen o deberes..." rows="3"></textarea>
-          
+          <textarea id="note-text" placeholder="Escribe un apunte o deberes..." rows="3"></textarea>
           <div class="note-attach-bar">
             <label class="btn-photo-attach" for="note-photo-input">
-              📷 <span>Añadir foto de pizarra o cuaderno</span>
+              📷 <span>Foto pizarra / cuaderno</span>
             </label>
             <input type="file" id="note-photo-input" accept="image/*" capture="environment" style="display:none;">
             <span id="photo-preview-name" class="photo-badge" style="display: none;">Foto lista ✓</span>
           </div>
-
           <button class="btn-save-note" id="btn-save-note">Publicar en la asignatura</button>
         </div>
-
         <div class="subject-notes-list" id="subject-notes-list"></div>
       </div>
 
-      <!-- 3. Modal de personalización y orden -->
+      <!-- 5.3 Modal editar color y profesor -->
       <div id="modal-edit-subject" class="modal-overlay" style="display: none;">
         <div class="modal-card">
           <h3 class="modal-title">Personalizar Asignatura</h3>
           <form id="form-edit-subject">
             <div class="form-group">
-              <label for="edit-sub-name">Nombre de la asignatura</label>
+              <label for="edit-sub-name">Nombre</label>
               <input type="text" id="edit-sub-name" required>
             </div>
             <div class="form-group">
-              <label for="edit-sub-course">Curso / Año</label>
+              <label for="edit-sub-course">Curso</label>
               <input type="text" id="edit-sub-course" required>
             </div>
             <div class="form-group">
-              <label for="edit-sub-prof">Nombre del Profesor/a</label>
+              <label for="edit-sub-prof">Profesor/a</label>
               <input type="text" id="edit-sub-prof" required>
             </div>
-
             <div class="form-group">
-              <label>Color de fondo</label>
+              <label>Color de tarjeta</label>
               <div class="color-options-row" id="color-palette"></div>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
-                <input type="color" id="edit-sub-color-picker" value="#1e3c72" style="width: 44px; height: 36px; padding: 2px; cursor: pointer;">
-                <span style="font-size: 0.8rem; color: var(--text-muted);">O elige un color libre</span>
+                <input type="color" id="edit-sub-color-picker" value="#1e3c72" style="width: 44px; height: 34px; padding: 2px; cursor: pointer;">
+                <span style="font-size: 0.8rem; color: var(--text-muted);">Color libre</span>
+              </div>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-edit-sub">Cancelar</button>
+              <button type="submit" class="btn-save">Guardar</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- 5.4 Visor de foto completa -->
+      <div id="modal-photo-viewer" class="photo-modal-overlay" style="display: none;">
+        <button class="btn-close-photo" id="btn-close-photo">✕</button>
+        <img id="modal-expanded-img" src="" alt="Foto">
+      </div>
+    </section>
+
+    <!-- === TEMA HTML 6: VISTAS YOUTUBE Y CALENDARIO === -->
+    <section id="view-youtube" class="view-panel">
+      <h2 class="section-title">YOUTUBE</h2>
+      <div class="placeholder-box">
+        <p>🎬 <b>Canal & Vídeos de Estudio</b></p>
+        <p>Próximo módulo a programar.</p>
+      </div>
+    </section>
+
+    <section id="view-calendario" class="view-panel">
+      <h2 class="section-title">CALENDARIO</h2>
+      <div class="placeholder-box">
+        <p>🗓️ <b>Calendario Escolar</b></p>
+        <p>Próximo módulo a programar.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- === TEMA HTML 7: LIBRERÍAS Y SCRIPTS === -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>
