@@ -635,10 +635,11 @@ function renderYtVideos(videos) {
 }
 
 /* ===================================================
-   TEMA JS 8: CALENDARIO ESCOLAR (SINCRONIZADO CON TAREAS)
+   TEMA JS 8: CALENDARIO ESCOLAR (DIVISIONES POR COLOR)
    =================================================== */
 let currentCalDate = new Date();
 let selectedDateStr = new Date().toISOString().split('T')[0];
+let selectedTaskId = null; // Tarea enfocada al pulsar un color concreto
 
 const calMonthYear = document.getElementById('cal-month-year');
 const calDaysGrid = document.getElementById('cal-days-grid');
@@ -660,24 +661,22 @@ function renderCalendar() {
   const year = currentCalDate.getFullYear();
   const month = currentCalDate.getMonth();
 
-  // Nombre de mes y año
   calMonthYear.textContent = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(currentCalDate);
 
-  // Primer día del mes y total de días
-  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Lunes = 0
+  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7;
   const totalDays = new Date(year, month + 1, 0).getDate();
   const prevMonthTotalDays = new Date(year, month, 0).getDate();
 
   const todayStr = new Date().toISOString().split('T')[0];
   let html = '';
 
-  // Días del mes anterior para rellenar
+  // Días previos de relleno
   for (let i = firstDayIndex - 1; i >= 0; i--) {
     const dayNum = prevMonthTotalDays - i;
     html += `<div class="cal-day-cell other-month"><span class="cal-day-number">${dayNum}</span></div>`;
   }
 
-  // Días del mes actual
+  // Días del mes
   for (let day = 1; day <= totalDays; day++) {
     const monthStr = String(month + 1).padStart(2, '0');
     const dayPad = String(day).padStart(2, '0');
@@ -686,16 +685,33 @@ function renderCalendar() {
     const isToday = dateStr === todayStr ? 'today' : '';
     const isSelected = dateStr === selectedDateStr ? 'selected' : '';
 
-    // Buscar tareas asociadas a esta fecha
+    // Filtrar tareas de este día
     const dayTasks = tasks.filter(t => t.dueDate === dateStr);
-    const dotsHtml = dayTasks.slice(0, 3).map(t => {
-      return `<span class="cal-task-dot" style="background: ${getSubjectColor(t.subject)}"></span>`;
-    }).join('');
+    const hasTasks = dayTasks.length > 0 ? 'has-tasks' : '';
+
+    // Generar las franjas de color con las 3 letras
+    let slicesHtml = '';
+    if (dayTasks.length > 0) {
+      slicesHtml = `
+        <div class="cal-day-slices">
+          ${dayTasks.map(t => {
+            const initials = (t.subject || '???').trim().substring(0, 3).toUpperCase();
+            return `
+              <div class="cal-slice" style="background: ${getSubjectColor(t.subject)}" 
+                   onclick="selectCalendarTask(event, '${dateStr}', ${t.id})" 
+                   title="${t.subject}: ${t.title}">
+                <span>${initials}</span>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
 
     html += `
-      <div class="cal-day-cell ${isToday} ${isSelected}" onclick="selectCalendarDate('${dateStr}')">
+      <div class="cal-day-cell ${isToday} ${isSelected} ${hasTasks}" onclick="selectCalendarDate('${dateStr}')">
         <span class="cal-day-number">${day}</span>
-        <div class="cal-task-dots">${dotsHtml}</div>
+        ${slicesHtml}
       </div>
     `;
   }
@@ -704,8 +720,18 @@ function renderCalendar() {
   renderSelectedDayTasks();
 }
 
+// Al pulsar en cualquier punto del día
 window.selectCalendarDate = function(dateStr) {
   selectedDateStr = dateStr;
+  selectedTaskId = null; // Ver todas las del día
+  renderCalendar();
+};
+
+// Al pulsar en una franja de color específica
+window.selectCalendarTask = function(e, dateStr, taskId) {
+  if (e) e.stopPropagation(); // Evita que se dispare el clic general del día
+  selectedDateStr = dateStr;
+  selectedTaskId = taskId; // Destacar esta tarea abajo
   renderCalendar();
 };
 
@@ -727,16 +753,19 @@ function renderSelectedDayTasks() {
     return;
   }
 
-  calDayTasksList.innerHTML = dayTasks.map(t => `
-    <div class="cal-task-entry ${t.completed ? 'completed' : ''}">
-      <span class="cal-task-badge" style="background: ${getSubjectColor(t.subject)}">${t.subject}</span>
-      <span class="cal-task-desc">${t.title}</span>
-      <input type="checkbox" class="task-checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
-    </div>
-  `).join('');
+  calDayTasksList.innerHTML = dayTasks.map(t => {
+    const isFocused = (selectedTaskId === t.id) ? 'selected-focus' : '';
+    return `
+      <div class="cal-task-entry ${t.completed ? 'completed' : ''} ${isFocused}">
+        <span class="cal-task-badge" style="background: ${getSubjectColor(t.subject)}">${t.subject}</span>
+        <span class="cal-task-desc">${t.title}</span>
+        <input type="checkbox" class="task-checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
+      </div>
+    `;
+  }).join('');
 }
 
-// Navegación de meses
+// Botones de mes
 if (calPrevBtn) {
   calPrevBtn.addEventListener('click', () => {
     currentCalDate.setMonth(currentCalDate.getMonth() - 1);
@@ -755,6 +784,7 @@ if (calTodayBtn) {
   calTodayBtn.addEventListener('click', () => {
     currentCalDate = new Date();
     selectedDateStr = new Date().toISOString().split('T')[0];
+    selectedTaskId = null;
     renderCalendar();
   });
 }

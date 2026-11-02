@@ -779,7 +779,7 @@ input:focus, select:focus {
 }
 
 /* ===================================================
-   TEMA CSS 8: CALENDARIO ESCOLAR (ESTILO GOOGLE CALENDAR)
+   TEMA CSS 8: CALENDARIO ESCOLAR (DIVISIONES POR COLORES)
    =================================================== */
 .calendar-header {
   display: flex;
@@ -844,15 +844,16 @@ input:focus, select:focus {
   margin-bottom: 16px;
 }
 
+/* Celda del día */
 .cal-day-cell {
   background: #ffffff;
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  min-height: 52px;
-  padding: 4px 2px;
+  min-height: 58px;
+  position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  align-items: center;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -863,49 +864,84 @@ input:focus, select:focus {
 }
 
 .cal-day-cell.today {
-  border-color: var(--primary);
-  background: #faf8ff;
-}
-
-.cal-day-cell.today .cal-day-number {
-  background: var(--primary);
-  color: #ffffff;
-  border-radius: 50%;
-  width: 22px;
-  height: 22px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  outline: 2px solid var(--primary);
 }
 
 .cal-day-cell.selected {
-  outline: 2px solid var(--primary);
-  box-shadow: 0 2px 8px rgba(124, 93, 250, 0.25);
+  box-shadow: 0 0 0 2px #1f2430;
+  transform: scale(1.02);
+  z-index: 2;
 }
 
+/* Número del día sin tareas */
 .cal-day-number {
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-dark);
-  margin-bottom: 3px;
+  padding: 4px;
 }
 
-/* Indicadores de tareas dentro de la celda */
-.cal-task-dots {
+.cal-day-cell.today .cal-day-number {
+  color: var(--primary);
+  font-weight: 800;
+}
+
+/* Número del día flotante sobre los bloques de color */
+.cal-day-cell.has-tasks .cal-day-number {
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  z-index: 4;
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: #ffffff;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  padding: 1px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.cal-day-cell.has-tasks.today .cal-day-number {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+/* Contenedor que divide el recuadro en partes iguales */
+.cal-day-slices {
+  position: absolute;
+  inset: 0;
   display: flex;
-  gap: 3px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+}
+
+/* Cada franja de color con sus 3 letras */
+.cal-slice {
+  flex: 1;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  max-width: 100%;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  cursor: pointer;
+  transition: filter 0.15s ease;
 }
 
-.cal-task-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
+.cal-slice:last-child {
+  border-bottom: none;
 }
 
-/* Detalle inferior de tareas del día */
+.cal-slice:active {
+  filter: brightness(1.25);
+}
+
+/* Detalle inferior de tareas */
 .cal-selected-day-card {
   background: #fbfbfd;
   border: 1.5px solid var(--border-color);
@@ -935,6 +971,15 @@ input:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
+  transition: all 0.2s ease;
+}
+
+/* Efecto destacado al pulsar sobre una franja de color concreta */
+.cal-task-entry.selected-focus {
+  border: 2px solid var(--primary);
+  background: var(--primary-soft);
+  box-shadow: 0 4px 12px rgba(124, 93, 250, 0.25);
+  transform: scale(1.02);
 }
 
 .cal-task-badge {
