@@ -1,5 +1,70 @@
 /* ===================================================
-   TEMA JS 1: NAVEGACIÓN Y PESTAÑAS (INFALIBLE)
+   TEMA JS 1: PWA, FECHA Y FONDO PERSONALIZABLE
+   =================================================== */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// 1.1 Mostrar fecha de hoy en cabecera
+const dateElement = document.getElementById('current-date');
+if (dateElement) {
+  dateElement.textContent = new Date().toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+}
+
+// 1.2 Menú 3 puntos de la cabecera
+const menuDotsBtn = document.getElementById('menu-dots-btn');
+const menuDropdown = document.getElementById('menu-dropdown');
+if (menuDotsBtn && menuDropdown) {
+  menuDotsBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    menuDropdown.classList.toggle('show');
+  });
+  document.addEventListener('click', () => menuDropdown.classList.remove('show'));
+}
+
+// 1.3 Cambio de imagen de portada (con compresión ligera para memoria)
+const heroHeader = document.getElementById('hero-header');
+const coverInput = document.getElementById('cover-input');
+const savedCover = localStorage.getItem('amaia_cover_image');
+if (savedCover && heroHeader) {
+  heroHeader.style.backgroundImage = `url('${savedCover}')`;
+}
+
+if (coverInput && heroHeader) {
+  coverInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 1200;
+          let w = img.width, h = img.height;
+          if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+          else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+          canvas.width = w; canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+          const compressed = canvas.toDataURL('image/jpeg', 0.75);
+          heroHeader.style.backgroundImage = `url('${compressed}')`;
+          try {
+            localStorage.setItem('amaia_cover_image', compressed);
+          } catch (err) {}
+          if (menuDropdown) menuDropdown.classList.remove('show');
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+}
+
+/* ===================================================
+   TEMA JS 2: CAMBIO DE PESTAÑAS (PÍLDORAS)
    =================================================== */
 window.switchTab = function(targetId, btnElement) {
   document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
@@ -21,6 +86,7 @@ window.switchTab = function(targetId, btnElement) {
     activePanel.style.display = 'block';
   }
 
+  // Reiniciar a la lista principal al pulsar Asignaturas
   if (targetId === 'view-asignaturas') {
     const listScreen = document.getElementById('subjects-list-screen');
     const detailScreen = document.getElementById('subject-detail-screen');
@@ -29,7 +95,7 @@ window.switchTab = function(targetId, btnElement) {
     renderClassroomCards();
   }
 
-  // Reiniciar vista YouTube a las materias y sincronizar tarjetas
+  // Reiniciar a la lista principal al pulsar YouTube
   if (targetId === 'view-youtube') {
     const ytList = document.getElementById('yt-subjects-screen');
     const ytVideos = document.getElementById('yt-videos-screen');
@@ -40,29 +106,7 @@ window.switchTab = function(targetId, btnElement) {
 };
 
 /* ===================================================
-   TEMA JS 2: CAMBIO DE PESTAÑAS (PÍLDORAS)
-   =================================================== */
-const pillButtons = document.querySelectorAll('.pill-btn');
-const viewPanels = document.querySelectorAll('.view-panel');
-
-pillButtons.forEach(btn => {
-  btn.addEventListener('click', () => {
-    pillButtons.forEach(b => b.classList.remove('active'));
-    viewPanels.forEach(p => p.classList.remove('active'));
-
-    btn.classList.add('active');
-    const target = document.getElementById(btn.getAttribute('data-target'));
-    if (target) target.classList.add('active');
-
-    if (btn.getAttribute('data-target') === 'view-asignaturas') {
-      document.getElementById('subjects-list-screen').style.display = 'block';
-      document.getElementById('subject-detail-screen').style.display = 'none';
-    }
-  });
-});
-
-/* ===================================================
-   TEMA JS 3: BASE DE DATOS FIREBASE
+   TEMA JS 3: CONEXIÓN FIREBASE
    =================================================== */
 const firebaseConfig = {
   apiKey: "AIzaSyAjklSkVXN1bM-mJUArpi6-YP-wmY7DZn8",
@@ -73,7 +117,9 @@ const firebaseConfig = {
   appId: "1:791939976390:web:cb6dc70856388b4040dbc7"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const db = firebase.firestore();
 db.enablePersistence().catch(() => {});
 
@@ -210,12 +256,15 @@ function renderClassroomCards() {
 renderClassroomCards();
 
 db.collection('config').doc('subjects_list').onSnapshot((doc) => {
-  if (doc.exists && doc.data().items) subjectsList = doc.data().items;
-  else db.collection('config').doc('subjects_list').set({ items: DEFAULT_SUBJECTS });
+  if (doc.exists && doc.data().items) {
+    subjectsList = doc.data().items;
+  } else {
+    db.collection('config').doc('subjects_list').set({ items: DEFAULT_SUBJECTS });
+  }
   renderClassroomCards();
 });
 
-// Modal de edición de materia
+// Modal de edición de asignatura
 const modalEdit = document.getElementById('modal-edit-subject');
 const formEdit = document.getElementById('form-edit-subject');
 const palette = document.getElementById('color-palette');
@@ -229,10 +278,12 @@ window.openEditModal = function(e, index) {
   document.getElementById('edit-sub-prof').value = s.prof;
   selectedColorValue = s.color;
 
-  palette.innerHTML = PRESET_COLORS.map(c => `
-    <div class="color-circle ${c === s.color ? 'selected' : ''}" style="background: ${c}" onclick="selectColor('${c}', this)"></div>
-  `).join('');
-  modalEdit.style.display = 'flex';
+  if (palette) {
+    palette.innerHTML = PRESET_COLORS.map(c => `
+      <div class="color-circle ${c === s.color ? 'selected' : ''}" style="background: ${c}" onclick="selectColor('${c}', this)"></div>
+    `).join('');
+  }
+  if (modalEdit) modalEdit.style.display = 'flex';
 };
 
 window.selectColor = function(color, el) {
@@ -241,26 +292,32 @@ window.selectColor = function(color, el) {
   if (el) el.classList.add('selected');
 };
 
-document.getElementById('edit-sub-color-picker').addEventListener('input', (e) => {
-  selectedColorValue = e.target.value;
-  document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
-});
+const picker = document.getElementById('edit-sub-color-picker');
+if (picker) {
+  picker.addEventListener('input', (e) => {
+    selectedColorValue = e.target.value;
+    document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+  });
+}
 
-document.getElementById('btn-cancel-edit-sub').addEventListener('click', () => modalEdit.style.display = 'none');
+const btnCancelEdit = document.getElementById('btn-cancel-edit-sub');
+if (btnCancelEdit && modalEdit) btnCancelEdit.addEventListener('click', () => modalEdit.style.display = 'none');
 
-formEdit.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (editingIndex === -1) return;
-  subjectsList[editingIndex] = {
-    ...subjectsList[editingIndex],
-    name: document.getElementById('edit-sub-name').value.trim(),
-    course: document.getElementById('edit-sub-course').value.trim(),
-    prof: document.getElementById('edit-sub-prof').value.trim(),
-    color: selectedColorValue
-  };
-  await db.collection('config').doc('subjects_list').set({ items: subjectsList });
-  modalEdit.style.display = 'none';
-});
+if (formEdit) {
+  formEdit.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (editingIndex === -1) return;
+    subjectsList[editingIndex] = {
+      ...subjectsList[editingIndex],
+      name: document.getElementById('edit-sub-name').value.trim(),
+      course: document.getElementById('edit-sub-course').value.trim(),
+      prof: document.getElementById('edit-sub-prof').value.trim(),
+      color: selectedColorValue
+    };
+    await db.collection('config').doc('subjects_list').set({ items: subjectsList });
+    if (modalEdit) modalEdit.style.display = 'none';
+  });
+}
 
 /* ===================================================
    TEMA JS 6: APUNTES, FOTOS Y VISOR MODAL
@@ -277,7 +334,7 @@ window.openSubjectDetail = function(subjectId) {
   activeSubject = subjectsList.find(s => s.id === subjectId);
   if (!activeSubject) return;
 
-  notesContainer.innerHTML = '<div class="placeholder-box"><p>Cargando apuntes...</p></div>';
+  if (notesContainer) notesContainer.innerHTML = '<div class="placeholder-box"><p>Cargando apuntes...</p></div>';
   document.getElementById('detail-title').textContent = activeSubject.name;
   document.getElementById('detail-course-prof').textContent = `${activeSubject.course} • ${activeSubject.prof}`;
   document.getElementById('detail-banner').style.background = activeSubject.color;
@@ -293,53 +350,58 @@ window.openSubjectDetail = function(subjectId) {
   });
 };
 
-document.getElementById('btn-back-subjects').addEventListener('click', () => {
-  document.getElementById('subject-detail-screen').style.display = 'none';
-  document.getElementById('subjects-list-screen').style.display = 'block';
-  if (unsubscribeNotes) unsubscribeNotes();
-  activeSubject = null;
-});
-
-// Comprimir foto
-photoInput.addEventListener('change', (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = (event) => {
-    const img = new Image();
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const maxDim = 850;
-      let w = img.width, h = img.height;
-      if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-      else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
-      canvas.width = w; canvas.height = h;
-      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-      currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.60);
-      photoBadge.style.display = 'inline';
-    };
-    img.src = event.target.result;
-  };
-  reader.readAsDataURL(file);
-});
-
-// Guardar apunte
-btnSaveNote.addEventListener('click', async () => {
-  const text = noteArea.value.trim();
-  if (!text && !currentPhotoBase64) return alert('Escribe algo o saca una foto.');
-  btnSaveNote.disabled = true;
-  await db.collection('notes_' + activeSubject.id).add({
-    text: text,
-    photo: currentPhotoBase64 || null,
-    dateString: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
-    timestamp: Date.now()
+const btnBack = document.getElementById('btn-back-subjects');
+if (btnBack) {
+  btnBack.addEventListener('click', () => {
+    document.getElementById('subject-detail-screen').style.display = 'none';
+    document.getElementById('subjects-list-screen').style.display = 'block';
+    if (unsubscribeNotes) unsubscribeNotes();
+    activeSubject = null;
   });
-  noteArea.value = '';
-  currentPhotoBase64 = null;
-  photoInput.value = '';
-  photoBadge.style.display = 'none';
-  btnSaveNote.disabled = false;
-});
+}
+
+if (photoInput) {
+  photoInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 850;
+        let w = img.width, h = img.height;
+        if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+        else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        currentPhotoBase64 = canvas.toDataURL('image/jpeg', 0.60);
+        if (photoBadge) photoBadge.style.display = 'inline';
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+if (btnSaveNote) {
+  btnSaveNote.addEventListener('click', async () => {
+    const text = noteArea ? noteArea.value.trim() : '';
+    if (!text && !currentPhotoBase64) return alert('Escribe algo o saca una foto.');
+    btnSaveNote.disabled = true;
+    await db.collection('notes_' + activeSubject.id).add({
+      text: text,
+      photo: currentPhotoBase64 || null,
+      dateString: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now()
+    });
+    if (noteArea) noteArea.value = '';
+    currentPhotoBase64 = null;
+    if (photoInput) photoInput.value = '';
+    if (photoBadge) photoBadge.style.display = 'none';
+    btnSaveNote.disabled = false;
+  });
+}
 
 window.deleteNote = async function(e, id) {
   e.stopPropagation();
@@ -351,11 +413,15 @@ window.expandPhoto = function(src) {
   document.getElementById('modal-photo-viewer').style.display = 'flex';
 };
 
-document.getElementById('btn-close-photo').addEventListener('click', () => {
-  document.getElementById('modal-photo-viewer').style.display = 'none';
-});
+const btnClosePh = document.getElementById('btn-close-photo');
+if (btnClosePh) {
+  btnClosePh.addEventListener('click', () => {
+    document.getElementById('modal-photo-viewer').style.display = 'none';
+  });
+}
 
 function renderSubjectNotes(notes) {
+  if (!notesContainer) return;
   if (notes.length === 0) {
     notesContainer.innerHTML = `<div class="placeholder-box" style="padding:25px 10px;"><p>📝 No hay apuntes todavía en esta materia.</p></div>`;
     return;
@@ -390,7 +456,6 @@ const btnSaveYtVideo = document.getElementById('btn-save-yt-video');
 const ytVideoUrlInput = document.getElementById('yt-video-url');
 const ytVideoTitleInput = document.getElementById('yt-video-title');
 
-// Modal del reproductor
 const modalYtPlayer = document.getElementById('modal-yt-player');
 const ytIframe = document.getElementById('yt-iframe');
 const btnCloseYtPlayer = document.getElementById('btn-close-yt-player');
@@ -398,7 +463,6 @@ const btnCloseYtPlayer = document.getElementById('btn-close-yt-player');
 let activeYtSubject = null;
 let unsubscribeYtVideos = null;
 
-// Función para extraer el ID único de cualquier formato de enlace de YouTube (normal, corto o shorts)
 function extractYouTubeId(url) {
   if (!url) return null;
   const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
@@ -406,7 +470,6 @@ function extractYouTubeId(url) {
   return match ? match[1] : null;
 }
 
-// 1. Pintar las tarjetas con los mismos colores y orden de Asignaturas
 function renderYtClassroomCards() {
   if (!ytGrid) return;
   ytGrid.innerHTML = subjectsList.map((s) => `
@@ -423,7 +486,6 @@ function renderYtClassroomCards() {
   `).join('');
 }
 
-// 2. Abrir la asignatura y escuchar sus vídeos en Firebase
 window.openYtSubjectDetail = function(subjectId) {
   activeYtSubject = subjectsList.find(s => s.id === subjectId);
   if (!activeYtSubject) return;
@@ -453,7 +515,6 @@ if (btnBackYt) {
   });
 }
 
-// 3. Guardar vídeo con miniatura automática
 if (btnSaveYtVideo) {
   btnSaveYtVideo.addEventListener('click', async () => {
     const rawUrl = ytVideoUrlInput ? ytVideoUrlInput.value.trim() : '';
@@ -482,7 +543,7 @@ if (btnSaveYtVideo) {
       if (ytVideoUrlInput) ytVideoUrlInput.value = '';
       if (ytVideoTitleInput) ytVideoTitleInput.value = '';
     } catch (err) {
-      console.error('Error al guardar vídeo de YouTube:', err);
+      console.error('Error al guardar vídeo:', err);
       alert('No se pudo guardar el vídeo.');
     } finally {
       btnSaveYtVideo.disabled = false;
@@ -491,7 +552,6 @@ if (btnSaveYtVideo) {
   });
 }
 
-// 4. Reproducir vídeo en el visor integrado (sin abrir la app de YouTube)
 window.playYtVideo = function(videoId) {
   if (ytIframe && modalYtPlayer) {
     ytIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
@@ -502,7 +562,7 @@ window.playYtVideo = function(videoId) {
 function closeYtPlayer() {
   if (modalYtPlayer && ytIframe) {
     modalYtPlayer.style.display = 'none';
-    ytIframe.src = ''; // Corta la reproducción de inmediato al cerrar
+    ytIframe.src = '';
   }
 }
 
@@ -514,7 +574,6 @@ if (modalYtPlayer) {
   });
 }
 
-// 5. Borrar vídeo
 window.deleteYtVideo = async function(e, id) {
   e.stopPropagation();
   if (confirm('¿Eliminar este vídeo de la asignatura?')) {
@@ -522,7 +581,6 @@ window.deleteYtVideo = async function(e, id) {
   }
 };
 
-// 6. Dibujar la cuadrícula de vídeos con sus miniaturas
 function renderYtVideos(videos) {
   if (!ytVideosContainer) return;
   if (videos.length === 0) {
