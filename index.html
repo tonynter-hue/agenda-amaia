@@ -14,13 +14,21 @@
 </head>
 <body>
 
-  <!-- === TEMA HTML 2: CABECERA CON IMAGEN Y CAMBIO DE FONDO === -->
+  <!-- === TEMA HTML 2: CABECERA CON IMAGEN Y MENÚ DE 3 PUNTOS === -->
   <header class="hero-header" id="hero-header">
     <div class="hero-overlay"></div>
-    <label class="btn-change-cover" for="cover-input" title="Cambiar portada">
-      📷 <span>Cambiar fondo</span>
-    </label>
+    
+    <!-- Menú 3 puntitos -->
+    <div class="menu-container">
+      <button class="btn-menu-dots" id="menu-dots-btn" aria-label="Opciones">⋮</button>
+      <div class="menu-dropdown" id="menu-dropdown">
+        <label class="menu-item" for="cover-input">
+          📷 Cambiar fondo
+        </label>
+      </div>
+    </div>
     <input type="file" id="cover-input" accept="image/*" style="display: none;">
+
     <div class="hero-info">
       <h1 class="hero-title">Espacio de Amaia ✨</h1>
       <p class="hero-date" id="current-date">Cargando fecha...</p>
@@ -113,7 +121,9 @@
 
   </main>
 
-  <!-- === TEMA HTML 5: VÍNCULO A SCRIPTS === -->
+ <!-- === TEMA HTML 5: VÍNCULO A FIREBASE Y SCRIPTS === -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

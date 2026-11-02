@@ -1,7 +1,7 @@
 /* ===================================================
-   TEMA JS 1: CABECERA, FONDO Y REGISTRO PWA
+   TEMA JS 1: CABECERA, MENÚ 3 PUNTOS Y FONDO
    =================================================== */
-// 1. Registro del Service Worker para habilitar la instalación PWA
+// 1. Registro del Service Worker para PWA
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW error:', err));
 }
@@ -15,7 +15,21 @@ dateElement.textContent = today.toLocaleDateString('es-ES', {
   month: 'long'
 });
 
-// 3. Fondo guardado en el teléfono
+// 3. Menú de 3 puntos
+const menuDotsBtn = document.getElementById('menu-dots-btn');
+const menuDropdown = document.getElementById('menu-dropdown');
+
+menuDotsBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  menuDropdown.classList.toggle('show');
+});
+
+// Cerrar el menú si pulsa fuera
+document.addEventListener('click', () => {
+  menuDropdown.classList.remove('show');
+});
+
+// 4. Guardar y cargar fondo de cabecera
 const heroHeader = document.getElementById('hero-header');
 const coverInput = document.getElementById('cover-input');
 
@@ -32,6 +46,7 @@ coverInput.addEventListener('change', (e) => {
       const base64Image = event.target.result;
       heroHeader.style.backgroundImage = `url('${base64Image}')`;
       localStorage.setItem('amaia_cover_image', base64Image);
+      menuDropdown.classList.remove('show');
     };
     reader.readAsDataURL(file);
   }
@@ -54,14 +69,34 @@ pillButtons.forEach(btn => {
 });
 
 /* ===================================================
-   TEMA JS 3: ALMACENAMIENTO DE TAREAS
+   TEMA JS 3: CONEXIÓN CON FIREBASE CLOUD
    =================================================== */
-let tasks = JSON.parse(localStorage.getItem('amaia_tasks')) || [];
+const firebaseConfig = {
+  apiKey: "AIzaSyAjklSkVXN1bM-mJUArpi6-YP-wmY7DZn8",
+  authDomain: "agenda-amaia.firebaseapp.com",
+  projectId: "agenda-amaia",
+  storageBucket: "agenda-amaia.firebasestorage.app",
+  messagingSenderId: "791939976390",
+  appId: "1:791939976390:web:cb6dc70856388b4040dbc7"
+};
 
-function saveAndRenderTasks() {
-  localStorage.setItem('amaia_tasks', JSON.stringify(tasks));
+// Iniciar Firebase y la base de datos Firestore
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// Activar persistencia sin conexión (funciona aunque no haya cobertura)
+db.enablePersistence().catch(() => {});
+
+let tasks = [];
+
+// Sincronización en tiempo real: cualquier cambio en la nube se dibuja al instante
+db.collection('tasks').orderBy('id', 'desc').onSnapshot((snapshot) => {
+  tasks = [];
+  snapshot.forEach((doc) => {
+    tasks.push(doc.data());
+  });
   renderTasks();
-}
+});
 
 /* ===================================================
    TEMA JS 4: FORMULARIO DE TAREAS
@@ -83,7 +118,8 @@ closeFormBtn.addEventListener('click', () => {
   taskForm.reset();
 });
 
-taskForm.addEventListener('submit', (e) => {
+// Guardar nueva tarea en la nube de Google
+taskForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const newTask = {
     id: Date.now(),
@@ -93,25 +129,32 @@ taskForm.addEventListener('submit', (e) => {
     completed: false
   };
 
-  tasks.unshift(newTask);
-  saveAndRenderTasks();
-
-  taskForm.reset();
-  formCard.classList.remove('visible');
-  openFormBtn.style.display = 'flex';
+  try {
+    await db.collection('tasks').doc(String(newTask.id)).set(newTask);
+    taskForm.reset();
+    formCard.classList.remove('visible');
+    openFormBtn.style.display = 'flex';
+  } catch (error) {
+    console.error("Error al guardar en la nube:", error);
+  }
 });
 
 /* ===================================================
-   TEMA JS 5: ACCIONES Y RENDERIZADO
+   TEMA JS 5: ACCIONES Y RENDERIZADO (CON SINCRONIZACIÓN)
    =================================================== */
-window.toggleTask = function(id) {
-  tasks = tasks.map(t => (t.id === id ? { ...t, completed: !t.completed } : t));
-  saveAndRenderTasks();
+window.toggleTask = async function(id) {
+  const currentTask = tasks.find(t => t.id === id);
+  if (currentTask) {
+    await db.collection('tasks').doc(String(id)).update({
+      completed: !currentTask.completed
+    });
+  }
 };
 
-window.deleteTask = function(id) {
-  tasks = tasks.filter(t => t.id !== id);
-  saveAndRenderTasks();
+window.deleteTask = async function(id) {
+  if (confirm('¿Eliminar esta tarea?')) {
+    await db.collection('tasks').doc(String(id)).delete();
+  }
 };
 
 function renderTasks() {
@@ -148,5 +191,3 @@ function renderTasks() {
     `;
   }).join('');
 }
-
-renderTasks();
