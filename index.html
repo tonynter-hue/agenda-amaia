@@ -14,11 +14,10 @@
 </head>
 <body>
 
-  <!-- === TEMA HTML 2: CABECERA CON IMAGEN Y MENÚ DE 3 PUNTOS === -->
+  <!-- === TEMA HTML 2: CABECERA CON IMAGEN Y MENÚ 3 PUNTOS === -->
   <header class="hero-header" id="hero-header">
     <div class="hero-overlay"></div>
     
-    <!-- Menú 3 puntitos -->
     <div class="menu-container">
       <button class="btn-menu-dots" id="menu-dots-btn" aria-label="Opciones">⋮</button>
       <div class="menu-dropdown" id="menu-dropdown">
@@ -54,7 +53,6 @@
         <span>＋</span> Añadir tarea o examen
       </button>
 
-      <!-- Formulario para nueva tarea -->
       <div class="form-card" id="task-form-card">
         <form id="task-form">
           <div class="form-group">
@@ -88,19 +86,18 @@
         </form>
       </div>
 
-      <!-- Listado de tareas -->
       <div class="task-list" id="task-list"></div>
     </section>
 
     <!-- Subtema 4.2: Vista Asignaturas -->
     <section id="view-asignaturas" class="view-panel">
-      <!-- 1. Pantalla de tarjetas principales -->
+      <!-- 1. Pantalla de listado -->
       <div id="subjects-list-screen">
         <h2 class="section-title">MIS ASIGNATURAS</h2>
         <div class="classroom-grid" id="classroom-grid"></div>
       </div>
 
-      <!-- 2. Pantalla detalle de la asignatura -->
+      <!-- 2. Pantalla detalle de la materia -->
       <div id="subject-detail-screen" class="subject-detail" style="display: none;">
         <button class="btn-back-subjects" id="btn-back-subjects">← Volver a asignaturas</button>
         
@@ -123,11 +120,10 @@
           <button class="btn-save-note" id="btn-save-note">Publicar en la asignatura</button>
         </div>
 
-        <!-- Historial de notas exclusivo de esta asignatura -->
         <div class="subject-notes-list" id="subject-notes-list"></div>
       </div>
 
-      <!-- 3. Modal para editar Asignatura, Color y Orden -->
+      <!-- 3. Modal de personalización y orden -->
       <div id="modal-edit-subject" class="modal-overlay" style="display: none;">
         <div class="modal-card">
           <h3 class="modal-title">Personalizar Asignatura</h3>
@@ -145,63 +141,9 @@
               <input type="text" id="edit-sub-prof" required>
             </div>
 
-            <!-- Selector de Color -->
             <div class="form-group">
               <label>Color de fondo</label>
               <div class="color-options-row" id="color-palette"></div>
               <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
                 <input type="color" id="edit-sub-color-picker" value="#1e3c72" style="width: 44px; height: 36px; padding: 2px; cursor: pointer;">
                 <span style="font-size: 0.8rem; color: var(--text-muted);">O elige un color libre</span>
-              </div>
-            </div>
-
-            <!-- Botones para reordenar -->
-            <div class="form-group">
-              <label>Posición en la lista</label>
-              <div class="order-btn-group">
-                <button type="button" class="btn-order" id="btn-move-up">⬆️ Subir puesto</button>
-                <button type="button" class="btn-order" id="btn-move-down">⬇️ Bajar puesto</button>
-              </div>
-            </div>
-
-            <div class="form-actions">
-              <button type="button" class="btn-cancel" id="btn-cancel-edit-sub">Cancelar</button>
-              <button type="submit" class="btn-save">Guardar cambios</button>
-            </div>
-          </form>
-        </div>
-      </div>
-
-      <!-- 4. Modal Visor de fotos a pantalla completa -->
-      <div id="modal-photo-viewer" class="photo-modal-overlay" style="display: none;">
-        <button class="btn-close-photo" id="btn-close-photo">✕</button>
-        <img id="modal-expanded-img" src="" alt="Foto ampliada">
-      </div>
-    </section>
-
-    <!-- Subtema 4.3: Vista YouTube -->
-    <section id="view-youtube" class="view-panel">
-      <h2 class="section-title">YOUTUBE</h2>
-      <div class="placeholder-box">
-        <p>🎬 <b>Canal & Vídeos de Estudio</b></p>
-        <p>Aquí incrustaremos sus vídeos, música de estudio y accesos directos.</p>
-      </div>
-    </section>
-
-    <!-- Subtema 4.4: Vista Calendario -->
-    <section id="view-calendario" class="view-panel">
-      <h2 class="section-title">CALENDARIO</h2>
-      <div class="placeholder-box">
-        <p>🗓️ <b>Calendario Escolar</b></p>
-        <p>Vista mensual de exámenes y entregas importantes.</p>
-      </div>
-    </section>
-
-  </main>
-
- <!-- === TEMA HTML 5: VÍNCULO A FIREBASE Y SCRIPTS === -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-  <script src="script.js"></script>
-</body>
-</html>
