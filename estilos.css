@@ -353,7 +353,7 @@ input:focus, select:focus {
 }
 
 /* ===================================================
-   TEMA CSS 6: ASIGNATURAS, FOTOS Y VISOR MODAL
+   TEMA CSS 6: ASIGNATURAS, FOTOS Y PERSONALIZACIÓN
    =================================================== */
 .classroom-grid {
   display: flex;
@@ -367,7 +367,7 @@ input:focus, select:focus {
   color: #ffffff;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   cursor: pointer;
   transition: transform 0.15s ease;
   min-height: 105px;
@@ -399,13 +399,13 @@ input:focus, select:focus {
 }
 
 .btn-sub-menu {
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.3);
   border: none;
   color: white;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   line-height: 1;
   display: flex;
   align-items: center;
@@ -421,7 +421,82 @@ input:focus, select:focus {
   margin-top: 10px;
 }
 
-/* Detalle de Asignatura */
+/* Modal y personalización */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.modal-card {
+  background: white;
+  width: 100%;
+  max-width: 440px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: var(--text-dark);
+}
+
+.color-options-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.color-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+  transition: transform 0.15s;
+}
+
+.color-circle.selected {
+  outline: 3px solid var(--primary);
+  transform: scale(1.1);
+}
+
+.order-btn-group {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.btn-order {
+  flex: 1;
+  background: #f1f5f9;
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+
+.btn-order:active {
+  background: #e2e8f0;
+}
+
+/* Detalle de Asignatura y notas */
 .btn-back-subjects {
   background: none;
   border: none;
@@ -514,7 +589,7 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
-/* Tarjetas de notas */
+/* Tarjetas de notas y fotos */
 .subject-notes-list {
   display: flex;
   flex-direction: column;
@@ -556,7 +631,6 @@ input:focus, select:focus {
   color: var(--text-dark);
 }
 
-/* Ajuste de foto: no se deforma y tiene proporción natural */
 .note-entry-img-container {
   margin-top: 10px;
   display: flex;
@@ -577,11 +651,11 @@ input:focus, select:focus {
   cursor: zoom-in;
 }
 
-/* Modal visor de foto ampliada */
+/* Visor a pantalla completa */
 .photo-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.92);
+  background: rgba(0, 0, 0, 0.94);
   z-index: 2000;
   display: flex;
   align-items: center;
@@ -612,34 +686,4 @@ input:focus, select:focus {
   max-height: 85vh;
   object-fit: contain;
   border-radius: 8px;
-  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.5);
-}
-
-/* Modal edición asignatura */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.55);
-  backdrop-filter: blur(4px);
-  z-index: 1000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.modal-card {
-  background: white;
-  width: 100%;
-  max-width: 420px;
-  border-radius: 18px;
-  padding: 22px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-}
-
-.modal-title {
-  font-size: 1.2rem;
-  font-weight: 800;
-  margin-bottom: 16px;
-  color: var(--text-dark);
 }

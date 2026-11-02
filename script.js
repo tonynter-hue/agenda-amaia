@@ -192,12 +192,12 @@ function renderTasks() {
   }).join('');
 }
 
-//* ===================================================
-   TEMA JS 6: ASIGNATURAS, FOTOS Y APUNTES INDEPENDIENTES
+/* ===================================================
+   TEMA JS 6: ASIGNATURAS, APUNTES AISLADOS Y ORDEN
    =================================================== */
-const INITIAL_SUBJECTS = [
+const DEFAULT_SUBJECTS = [
   { id: 'frances', name: 'FRANCÉS 6ºB', course: '2026/2027', prof: 'María Sánchez González', color: 'linear-gradient(135deg, #1e3c72, #2a5298)' },
-  { id: 'valores', name: 'VALORES 6º', course: '2026/2027', prof: 'Mari Carmen Martín García', color: 'linear-gradient(135deg, #0d7065, #11998e)' },
+  { id: 'valores', name: 'VALORES 6ºB', course: '2026/2027', prof: 'Mari Carmen Martín García', color: 'linear-gradient(135deg, #0d7065, #11998e)' },
   { id: 'ingles', name: 'ENGLISH GRADE 6B', course: '26-27', prof: 'Jesús Vallejo López', color: 'linear-gradient(135deg, #1f4068, #162447)' },
   { id: 'ciencias', name: 'SCIENCE GRADE 6B', course: '26-27', prof: 'Jesús Vallejo López', color: 'linear-gradient(135deg, #592576, #3f1a56)' },
   { id: 'matematicas', name: 'MATEMÁTICAS 6ºB', course: '2026/2027', prof: 'Tutor/a', color: 'linear-gradient(135deg, #e65c00, #f9d423)' },
@@ -206,9 +206,21 @@ const INITIAL_SUBJECTS = [
   { id: 'att', name: 'ATT 6ºB', course: '2026/2027', prof: 'Profesor/a', color: 'linear-gradient(135deg, #2c3e50, #3498db)' }
 ];
 
-let currentSubjects = [...INITIAL_SUBJECTS];
+const PRESET_COLORS = [
+  'linear-gradient(135deg, #1e3c72, #2a5298)',
+  'linear-gradient(135deg, #0d7065, #11998e)',
+  'linear-gradient(135deg, #1f4068, #162447)',
+  'linear-gradient(135deg, #592576, #3f1a56)',
+  'linear-gradient(135deg, #e65c00, #f9d423)',
+  'linear-gradient(135deg, #c0392b, #8e44ad)',
+  'linear-gradient(135deg, #ec4899, #8b5cf6)',
+  'linear-gradient(135deg, #2c3e50, #3498db)'
+];
+
+let subjectsList = [...DEFAULT_SUBJECTS];
 let activeSubject = null;
 let editingSubjectId = null;
+let selectedColorValue = '';
 let currentSelectedPhotoBase64 = null;
 let unsubscribeNotes = null;
 
@@ -225,7 +237,7 @@ const photoPreviewName = document.getElementById('photo-preview-name');
 const btnSaveNote = document.getElementById('btn-save-note');
 const subjectNotesList = document.getElementById('subject-notes-list');
 
-// Visor de fotos
+// Visor de foto
 const modalPhotoViewer = document.getElementById('modal-photo-viewer');
 const modalExpandedImg = document.getElementById('modal-expanded-img');
 const btnClosePhoto = document.getElementById('btn-close-photo');
@@ -237,36 +249,43 @@ const editSubName = document.getElementById('edit-sub-name');
 const editSubCourse = document.getElementById('edit-sub-course');
 const editSubProf = document.getElementById('edit-sub-prof');
 const btnCancelEditSub = document.getElementById('btn-cancel-edit-sub');
+const colorPalette = document.getElementById('color-palette');
+const editSubColorPicker = document.getElementById('edit-sub-color-picker');
+const btnMoveUp = document.getElementById('btn-move-up');
+const btnMoveDown = document.getElementById('btn-move-down');
 
-// 1. Cargar datos de asignaturas sincronizados
-db.collection('subjects_info').onSnapshot((snapshot) => {
-  const customData = {};
-  snapshot.forEach(doc => { customData[doc.id] = doc.data(); });
-  currentSubjects = INITIAL_SUBJECTS.map(sub => customData[sub.id] ? { ...sub, ...customData[sub.id] } : sub);
+// 1. Escuchar la lista completa de asignaturas (orden y colores sincronizados)
+db.collection('config').doc('subjects_list').onSnapshot((doc) => {
+  if (doc.exists && doc.data().items && doc.data().items.length > 0) {
+    subjectsList = doc.data().items;
+  } else {
+    // Si no existe, guardar la lista inicial en Firebase
+    db.collection('config').doc('subjects_list').set({ items: DEFAULT_SUBJECTS });
+  }
   renderClassroomCards();
 });
 
 function renderClassroomCards() {
-  classroomGrid.innerHTML = currentSubjects.map(sub => `
+  classroomGrid.innerHTML = subjectsList.map((sub, index) => `
     <article class="classroom-card" style="background: ${sub.color}" onclick="openSubjectDetail('${sub.id}')">
       <div class="classroom-card-top">
         <div>
           <div class="classroom-card-title">${sub.name}</div>
           <div class="classroom-card-course">${sub.course}</div>
         </div>
-        <button class="btn-sub-menu" onclick="openEditModal(event, '${sub.id}')" title="Editar">⋮</button>
+        <button class="btn-sub-menu" onclick="openEditModal(event, '${sub.id}', ${index})" title="Personalizar">⋮</button>
       </div>
       <div class="classroom-card-prof">${sub.prof}</div>
     </article>
   `).join('');
 }
 
-// 2. Abrir detalle y filtrar notas estrictamente por asignatura
+// 2. Abrir detalle y escuchar notas aisladas en su propia subcolección
 window.openSubjectDetail = function(subjectId) {
-  activeSubject = currentSubjects.find(s => s.id === subjectId);
+  activeSubject = subjectsList.find(s => s.id === subjectId);
   if (!activeSubject) return;
 
-  // Limpiar lista anterior inmediatamente para evitar que se mezclen
+  // Limpiar lista anterior de golpe
   subjectNotesList.innerHTML = '<div class="placeholder-box"><p>Cargando apuntes...</p></div>';
 
   detailTitle.textContent = activeSubject.name;
@@ -278,20 +297,17 @@ window.openSubjectDetail = function(subjectId) {
 
   if (unsubscribeNotes) unsubscribeNotes();
 
-  // Consulta simple sin requerir índices compuestos en Firebase
-  unsubscribeNotes = db.collection('subjects_notes')
-    .where('subjectId', '==', activeSubject.id)
+  // Colección única para esta asignatura (evita mezclas y no requiere índices compuestos)
+  unsubscribeNotes = db.collection('notes_' + activeSubject.id)
+    .orderBy('timestamp', 'desc')
     .onSnapshot((snapshot) => {
       const notes = [];
       snapshot.forEach(doc => {
         notes.push({ id: doc.id, ...doc.data() });
       });
-      // Ordenar en JavaScript por fecha más reciente
-      notes.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       renderSubjectNotes(notes);
-    }, (error) => {
-      console.error("Error al cargar notas:", error);
-      subjectNotesList.innerHTML = '<div class="placeholder-box"><p>Error al cargar apuntes.</p></div>';
+    }, (err) => {
+      console.error("Error al escuchar notas:", err);
     });
 };
 
@@ -312,7 +328,7 @@ notePhotoInput.addEventListener('change', (e) => {
     const img = new Image();
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      const maxDim = 900;
+      const maxDim = 850;
       let w = img.width, h = img.height;
       if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
       else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
@@ -320,7 +336,7 @@ notePhotoInput.addEventListener('change', (e) => {
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
       ctx.drawImage(img, 0, 0, w, h);
-      currentSelectedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
+      currentSelectedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.60);
       photoPreviewName.style.display = 'inline';
     };
     img.src = event.target.result;
@@ -328,7 +344,7 @@ notePhotoInput.addEventListener('change', (e) => {
   reader.readAsDataURL(file);
 });
 
-// 4. Guardar nota asociada a la asignatura activa
+// 4. Guardar apunte en la colección propia de la materia activa
 btnSaveNote.addEventListener('click', async () => {
   const text = noteTextInput.value.trim();
   if (!text && !currentSelectedPhotoBase64) {
@@ -340,8 +356,7 @@ btnSaveNote.addEventListener('click', async () => {
   btnSaveNote.textContent = 'Guardando...';
 
   try {
-    await db.collection('subjects_notes').add({
-      subjectId: activeSubject.id,
+    await db.collection('notes_' + activeSubject.id).add({
       text: text,
       photo: currentSelectedPhotoBase64 || null,
       dateString: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
@@ -361,20 +376,15 @@ btnSaveNote.addEventListener('click', async () => {
   }
 });
 
-// 5. Borrado individual de notas
+// 5. Borrado de notas
 window.deleteNote = async function(e, noteId) {
   if (e) e.stopPropagation();
   if (confirm('¿Eliminar este apunte de forma definitiva?')) {
-    try {
-      await db.collection('subjects_notes').doc(noteId).delete();
-    } catch (err) {
-      console.error("Error al borrar nota:", err);
-      alert("No se pudo eliminar el apunte.");
-    }
+    await db.collection('notes_' + activeSubject.id).doc(noteId).delete();
   }
 };
 
-// 6. Visor de foto ampliada
+// 6. Visor de foto a pantalla completa
 window.expandPhoto = function(photoSrc) {
   modalExpandedImg.src = photoSrc;
   modalPhotoViewer.style.display = 'flex';
@@ -392,7 +402,7 @@ modalPhotoViewer.addEventListener('click', (e) => {
   }
 });
 
-// 7. Renderizado de apuntes
+// 7. Renderizado de notas
 function renderSubjectNotes(notes) {
   if (notes.length === 0) {
     subjectNotesList.innerHTML = `
@@ -420,34 +430,81 @@ function renderSubjectNotes(notes) {
   `).join('');
 }
 
-// 8. Edición de asignaturas
-window.openEditModal = function(e, subId) {
+// 8. Personalización: Modal, Paleta de color y Reordenar
+let editingIndex = -1;
+
+window.openEditModal = function(e, subId, index) {
   e.stopPropagation();
   editingSubjectId = subId;
-  const sub = currentSubjects.find(s => s.id === subId);
+  editingIndex = index;
+  const sub = subjectsList[index];
   if (!sub) return;
 
   editSubName.value = sub.name;
   editSubCourse.value = sub.course;
   editSubProf.value = sub.prof;
+  selectedColorValue = sub.color;
+
+  // Pintar paleta de colores
+  colorPalette.innerHTML = PRESET_COLORS.map(c => `
+    <div class="color-circle ${c === sub.color ? 'selected' : ''}" style="background: ${c}" onclick="selectPresetColor('${c}', this)"></div>
+  `).join('');
+
   modalEditSubject.style.display = 'flex';
 };
+
+window.selectPresetColor = function(color, el) {
+  selectedColorValue = color;
+  document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+  if (el) el.classList.add('selected');
+};
+
+editSubColorPicker.addEventListener('input', (e) => {
+  selectedColorValue = e.target.value;
+  document.querySelectorAll('.color-circle').forEach(c => c.classList.remove('selected'));
+});
+
+// Reordenar posiciones (Subir / Bajar)
+btnMoveUp.addEventListener('click', async () => {
+  if (editingIndex > 0) {
+    const temp = subjectsList[editingIndex];
+    subjectsList[editingIndex] = subjectsList[editingIndex - 1];
+    subjectsList[editingIndex - 1] = temp;
+    editingIndex--;
+    await db.collection('config').doc('subjects_list').set({ items: subjectsList });
+  }
+});
+
+btnMoveDown.addEventListener('click', async () => {
+  if (editingIndex < subjectsList.length - 1) {
+    const temp = subjectsList[editingIndex];
+    subjectsList[editingIndex] = subjectsList[editingIndex + 1];
+    subjectsList[editingIndex + 1] = temp;
+    editingIndex++;
+    await db.collection('config').doc('subjects_list').set({ items: subjectsList });
+  }
+});
 
 btnCancelEditSub.addEventListener('click', () => {
   modalEditSubject.style.display = 'none';
   editingSubjectId = null;
 });
 
+// Guardar datos editados en Firebase
 formEditSubject.addEventListener('submit', async (e) => {
   e.preventDefault();
-  if (!editingSubjectId) return;
+  if (editingIndex === -1) return;
+
+  subjectsList[editingIndex] = {
+    ...subjectsList[editingIndex],
+    name: editSubName.value.trim(),
+    course: editSubCourse.value.trim(),
+    prof: editSubProf.value.trim(),
+    color: selectedColorValue
+  };
 
   try {
-    await db.collection('subjects_info').doc(editingSubjectId).set({
-      name: editSubName.value.trim(),
-      course: editSubCourse.value.trim(),
-      prof: editSubProf.value.trim()
-    }, { merge: true });
+    await db.collection('config').doc('subjects_list').set({ items: subjectsList });
     modalEditSubject.style.display = 'none';
     editingSubjectId = null;
   } catch (err) {
