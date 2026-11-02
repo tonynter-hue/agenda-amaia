@@ -129,22 +129,44 @@ const db = firebase.firestore();
 db.enablePersistence().catch(() => {});
 
 /* ===================================================
-   TEMA JS 4: GESTIÓN DE TAREAS (AGENDA)
+   TEMA JS 4: GESTIÓN DE TAREAS (AGENDA Y EDICIÓN)
    =================================================== */
 let tasks = [];
+let editingTaskId = null;
+
 const formCard = document.getElementById('task-form-card');
 const openFormBtn = document.getElementById('open-form-btn');
 const closeFormBtn = document.getElementById('close-form-btn');
 const taskForm = document.getElementById('task-form');
 const taskList = document.getElementById('task-list');
 
+// Modal para editar tarea
+const modalEditTask = document.getElementById('modal-edit-task');
+const formEditTask = document.getElementById('form-edit-task');
+const editTaskSubject = document.getElementById('edit-task-subject');
+const editTaskTitle = document.getElementById('edit-task-title');
+const editTaskDue = document.getElementById('edit-task-due');
+const btnCancelEditTask = document.getElementById('btn-cancel-edit-task');
+
 if (openFormBtn) openFormBtn.addEventListener('click', () => { formCard.classList.add('visible'); openFormBtn.style.display = 'none'; });
 if (closeFormBtn) closeFormBtn.addEventListener('click', () => { formCard.classList.remove('visible'); openFormBtn.style.display = 'flex'; taskForm.reset(); });
+
+// Función para mostrar la fecha en formato DD/MM/AAAA
+function formatDateDDMMAAAA(dateStr) {
+  if (!dateStr) return 'Sin fecha';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  }
+  return dateStr;
+}
 
 db.collection('tasks').orderBy('id', 'desc').onSnapshot((snapshot) => {
   tasks = [];
   snapshot.forEach(doc => tasks.push(doc.data()));
   renderTasks();
+  // Actualizar también los bloques de color del calendario si está cargado
+  if (typeof renderCalendar === 'function') renderCalendar();
 });
 
 if (taskForm) {
@@ -173,6 +195,43 @@ window.deleteTask = async function(id) {
   if (confirm('¿Eliminar esta tarea?')) await db.collection('tasks').doc(String(id)).delete();
 };
 
+// Abrir modal de edición con los datos cargados
+window.openEditTask = function(id) {
+  const task = tasks.find(t => t.id === id);
+  if (!task) return;
+  editingTaskId = id;
+  if (editTaskSubject) editTaskSubject.value = task.subject || '';
+  if (editTaskTitle) editTaskTitle.value = task.title || '';
+  if (editTaskDue) editTaskDue.value = task.dueDate || '';
+  if (modalEditTask) modalEditTask.style.display = 'flex';
+};
+
+if (btnCancelEditTask && modalEditTask) {
+  btnCancelEditTask.addEventListener('click', () => {
+    modalEditTask.style.display = 'none';
+    editingTaskId = null;
+  });
+}
+
+if (formEditTask) {
+  formEditTask.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!editingTaskId) return;
+
+    try {
+      await db.collection('tasks').doc(String(editingTaskId)).update({
+        subject: editTaskSubject.value,
+        title: editTaskTitle.value.trim(),
+        dueDate: editTaskDue.value
+      });
+      if (modalEditTask) modalEditTask.style.display = 'none';
+      editingTaskId = null;
+    } catch (err) {
+      console.error("Error al actualizar tarea:", err);
+    }
+  });
+}
+
 function renderTasks() {
   if (!taskList) return;
   if (tasks.length === 0) {
@@ -185,9 +244,12 @@ function renderTasks() {
       <div class="task-info">
         <span class="task-subject">${t.subject}</span>
         <div class="task-text">${t.title}</div>
-        <div class="task-date">📅 ${t.dueDate || 'Sin fecha'}</div>
+        <div class="task-date">📅 ${formatDateDDMMAAAA(t.dueDate)}</div>
       </div>
-      <button class="btn-delete" onclick="deleteTask(${t.id})">✕</button>
+      <div class="task-item-actions">
+        <button class="btn-edit-task" onclick="openEditTask(${t.id})" title="Editar tarea">✏️</button>
+        <button class="btn-delete" onclick="deleteTask(${t.id})" title="Borrar">✕</button>
+      </div>
     </article>
   `).join('');
 }
