@@ -697,11 +697,19 @@ function renderYtVideos(videos) {
 }
 
 /* ===================================================
-   TEMA JS 8: CALENDARIO ESCOLAR (DIVISIONES POR COLOR)
+   TEMA JS 8: CALENDARIO ESCOLAR (HORA LOCAL EXACTA)
    =================================================== */
+// Función auxiliar para obtener siempre la fecha local real (YYYY-MM-DD) sin desfase UTC
+function getLocalDateStr(d = new Date()) {
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 let currentCalDate = new Date();
-let selectedDateStr = new Date().toISOString().split('T')[0];
-let selectedTaskId = null; // Tarea enfocada al pulsar un color concreto
+let selectedDateStr = getLocalDateStr();
+let selectedTaskId = null;
 
 const calMonthYear = document.getElementById('cal-month-year');
 const calDaysGrid = document.getElementById('cal-days-grid');
@@ -729,16 +737,14 @@ function renderCalendar() {
   const totalDays = new Date(year, month + 1, 0).getDate();
   const prevMonthTotalDays = new Date(year, month, 0).getDate();
 
-  const todayStr = new Date().toISOString().split('T')[0];
+  const todayStr = getLocalDateStr();
   let html = '';
 
-  // Días previos de relleno
   for (let i = firstDayIndex - 1; i >= 0; i--) {
     const dayNum = prevMonthTotalDays - i;
     html += `<div class="cal-day-cell other-month"><span class="cal-day-number">${dayNum}</span></div>`;
   }
 
-  // Días del mes
   for (let day = 1; day <= totalDays; day++) {
     const monthStr = String(month + 1).padStart(2, '0');
     const dayPad = String(day).padStart(2, '0');
@@ -747,11 +753,9 @@ function renderCalendar() {
     const isToday = dateStr === todayStr ? 'today' : '';
     const isSelected = dateStr === selectedDateStr ? 'selected' : '';
 
-    // Filtrar tareas de este día
     const dayTasks = tasks.filter(t => t.dueDate === dateStr);
     const hasTasks = dayTasks.length > 0 ? 'has-tasks' : '';
 
-    // Generar las franjas de color con las 3 letras
     let slicesHtml = '';
     if (dayTasks.length > 0) {
       slicesHtml = `
@@ -782,18 +786,16 @@ function renderCalendar() {
   renderSelectedDayTasks();
 }
 
-// Al pulsar en cualquier punto del día
 window.selectCalendarDate = function(dateStr) {
   selectedDateStr = dateStr;
-  selectedTaskId = null; // Ver todas las del día
+  selectedTaskId = null;
   renderCalendar();
 };
 
-// Al pulsar en una franja de color específica
 window.selectCalendarTask = function(e, dateStr, taskId) {
-  if (e) e.stopPropagation(); // Evita que se dispare el clic general del día
+  if (e) e.stopPropagation();
   selectedDateStr = dateStr;
-  selectedTaskId = taskId; // Destacar esta tarea abajo
+  selectedTaskId = taskId;
   renderCalendar();
 };
 
@@ -827,7 +829,6 @@ function renderSelectedDayTasks() {
   }).join('');
 }
 
-// Botones de mes
 if (calPrevBtn) {
   calPrevBtn.addEventListener('click', () => {
     currentCalDate.setMonth(currentCalDate.getMonth() - 1);
@@ -845,7 +846,7 @@ if (calNextBtn) {
 if (calTodayBtn) {
   calTodayBtn.addEventListener('click', () => {
     currentCalDate = new Date();
-    selectedDateStr = new Date().toISOString().split('T')[0];
+    selectedDateStr = getLocalDateStr();
     selectedTaskId = null;
     renderCalendar();
   });
