@@ -418,7 +418,7 @@ input:focus, select:focus {
 }
 
 /* ===================================================
-   TEMA CSS 6: DETALLE MATERIA, FOTOS Y MODALES
+   TEMA CSS 6: DETALLE MATERIA, FOTOS COMPACTAS Y MODAL
    =================================================== */
 .btn-back-subjects {
   background: none;
@@ -433,36 +433,36 @@ input:focus, select:focus {
 
 .subject-header-banner {
   border-radius: 16px;
-  padding: 20px;
+  padding: 16px 18px;
   color: white;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .subject-header-banner h2 {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 800;
 }
 
 .subject-header-banner p {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   opacity: 0.9;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .note-input-card {
   background: #fbfbfd;
   border: 1.5px solid var(--border-color);
   border-radius: 14px;
-  padding: 14px;
-  margin-bottom: 20px;
+  padding: 12px;
+  margin-bottom: 14px;
 }
 
 .note-input-card textarea {
   width: 100%;
   border: 1px solid var(--border-color);
   border-radius: 10px;
-  padding: 10px;
-  font-size: 0.92rem;
+  padding: 8px 10px;
+  font-size: 0.88rem;
   outline: none;
   resize: none;
 }
@@ -471,24 +471,24 @@ input:focus, select:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 .btn-photo-attach {
   background: white;
   border: 1px solid var(--border-color);
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 0.82rem;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .photo-badge {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #10b981;
   font-weight: 700;
 }
@@ -498,33 +498,38 @@ input:focus, select:focus {
   background: var(--primary);
   color: white;
   border: none;
-  padding: 11px;
+  padding: 9px;
   border-radius: 10px;
   font-weight: 700;
+  font-size: 0.88rem;
   cursor: pointer;
 }
 
+/* Lista de notas con scroll propio para evitar páginas kilométricas */
 .subject-notes-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .note-entry-card {
   background: white;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
-  padding: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.02);
 }
 
 .note-entry-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   color: var(--text-muted);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .btn-delete-note {
@@ -533,32 +538,56 @@ input:focus, select:focus {
   color: #ef4444;
   font-weight: 700;
   cursor: pointer;
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 0.75rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.7rem;
 }
 
 .note-entry-text {
-  font-size: 0.92rem;
-  line-height: 1.45;
+  font-size: 0.88rem;
+  line-height: 1.35;
   white-space: pre-wrap;
 }
 
+/* Contenedor de foto reducido: no deforma y mide solo 120px de alto */
 .note-entry-img-container {
-  margin-top: 10px;
+  margin-top: 8px;
+  position: relative;
   display: flex;
   justify-content: center;
-  background: #f8fafc;
-  border-radius: 12px;
+  align-items: center;
+  background: #0f172a;
+  border-radius: 10px;
   overflow: hidden;
-  border: 1px solid var(--border-color);
+  height: 120px;
+  cursor: zoom-in;
 }
 
 .note-entry-img {
-  max-width: 100%;
-  max-height: 280px;
-  object-fit: contain;
-  cursor: zoom-in;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.95;
+  transition: transform 0.2s ease;
+}
+
+.note-entry-img-container:active .note-entry-img {
+  transform: scale(1.05);
+}
+
+.note-entry-img-container::after {
+  content: "🔍 Toca para ampliar";
+  position: absolute;
+  bottom: 6px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.65);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 6px;
+  backdrop-filter: blur(4px);
+  pointer-events: none;
 }
 
 /* Modales */
@@ -640,27 +669,34 @@ input:focus, select:focus {
   object-fit: contain;
   border-radius: 8px;
 }
+
 /* ===================================================
-   TEMA CSS 7: VISTA YOUTUBE, MINIATURAS Y REPRODUCTOR
+   TEMA CSS 7: VISTA YOUTUBE EN CUADRÍCULA (2 COLUMNAS)
    =================================================== */
+/* Cuadrícula de 2 columnas y scroll controlado */
 .yt-video-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .yt-video-card {
   background: #ffffff;
   border: 1px solid var(--border-color);
-  border-radius: 14px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
 }
 
 .yt-thumb-wrapper {
   position: relative;
   width: 100%;
-  padding-top: 56.25%; /* Proporción 16:9 */
+  padding-top: 56.25%; /* 16:9 */
   background: #000000;
   cursor: pointer;
 }
@@ -679,43 +715,54 @@ input:focus, select:focus {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(255, 0, 0, 0.88);
+  background: rgba(255, 0, 0, 0.9);
   color: white;
-  width: 52px;
-  height: 38px;
-  border-radius: 12px;
+  width: 36px;
+  height: 26px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.3rem;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-  transition: transform 0.2s ease;
+  font-size: 0.95rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
 }
 
 .yt-thumb-wrapper:active .yt-play-badge {
-  transform: translate(-50%, -50%) scale(1.15);
+  transform: translate(-50%, -50%) scale(1.1);
 }
 
 .yt-video-info {
-  padding: 12px 14px;
+  padding: 8px 10px;
   display: flex;
+  flex-direction: column;
   justify-content: space-between;
-  align-items: center;
-  gap: 10px;
+  flex: 1;
+  gap: 6px;
 }
 
 .yt-video-card-title {
-  font-size: 0.95rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-dark);
-  line-height: 1.3;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
+.yt-video-info .btn-delete-note {
+  align-self: flex-end;
+  padding: 2px 6px;
+  font-size: 0.65rem;
+}
+
+/* Reproductor flotante */
 .yt-player-box {
   width: 100%;
   max-width: 650px;
   position: relative;
-  padding-top: 56.25%; /* 16:9 */
+  padding-top: 56.25%;
   background: black;
   border-radius: 14px;
   overflow: hidden;
