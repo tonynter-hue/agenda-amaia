@@ -1,46 +1,43 @@
 /* ===================================================
-   TEMA JS 1: PWA, FECHA Y FONDO PERSONALIZABLE
+   TEMA JS 1: NAVEGACIÓN Y PESTAÑAS (INFALIBLE)
    =================================================== */
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(() => {});
-}
+window.switchTab = function(targetId, btnElement) {
+  document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+  if (btnElement) {
+    btnElement.classList.add('active');
+  } else {
+    const matchingBtn = document.querySelector(`[data-target="${targetId}"]`);
+    if (matchingBtn) matchingBtn.classList.add('active');
+  }
 
-const dateElement = document.getElementById('current-date');
-dateElement.textContent = new Date().toLocaleDateString('es-ES', {
-  weekday: 'long',
-  day: 'numeric',
-  month: 'long'
-});
-
-const menuDotsBtn = document.getElementById('menu-dots-btn');
-const menuDropdown = document.getElementById('menu-dropdown');
-if (menuDotsBtn && menuDropdown) {
-  menuDotsBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    menuDropdown.classList.toggle('show');
+  document.querySelectorAll('.view-panel').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = 'none';
   });
-  document.addEventListener('click', () => menuDropdown.classList.remove('show'));
-}
 
-const heroHeader = document.getElementById('hero-header');
-const coverInput = document.getElementById('cover-input');
-const savedCover = localStorage.getItem('amaia_cover_image');
-if (savedCover && heroHeader) heroHeader.style.backgroundImage = `url('${savedCover}')`;
+  const activePanel = document.getElementById(targetId);
+  if (activePanel) {
+    activePanel.classList.add('active');
+    activePanel.style.display = 'block';
+  }
 
-if (coverInput && heroHeader) {
-  coverInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        heroHeader.style.backgroundImage = `url('${event.target.result}')`;
-        localStorage.setItem('amaia_cover_image', event.target.result);
-        if (menuDropdown) menuDropdown.classList.remove('show');
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-}
+  if (targetId === 'view-asignaturas') {
+    const listScreen = document.getElementById('subjects-list-screen');
+    const detailScreen = document.getElementById('subject-detail-screen');
+    if (listScreen) listScreen.style.display = 'block';
+    if (detailScreen) detailScreen.style.display = 'none';
+    renderClassroomCards();
+  }
+
+  // Reiniciar vista YouTube a las materias y sincronizar tarjetas
+  if (targetId === 'view-youtube') {
+    const ytList = document.getElementById('yt-subjects-screen');
+    const ytVideos = document.getElementById('yt-videos-screen');
+    if (ytList) ytList.style.display = 'block';
+    if (ytVideos) ytVideos.style.display = 'none';
+    renderYtClassroomCards();
+  }
+};
 
 /* ===================================================
    TEMA JS 2: CAMBIO DE PESTAÑAS (PÍLDORAS)
@@ -375,6 +372,179 @@ function renderSubjectNotes(notes) {
           <img src="${n.photo}" class="note-entry-img" alt="Foto" onclick="expandPhoto('${n.photo}')">
         </div>
       ` : ''}
+    </article>
+  `).join('');
+}
+
+/* ===================================================
+   TEMA JS 7: VISTA YOUTUBE, MINIATURAS Y REPRODUCTOR
+   =================================================== */
+const ytGrid = document.getElementById('yt-classroom-grid');
+const ytSubjectsScreen = document.getElementById('yt-subjects-screen');
+const ytVideosScreen = document.getElementById('yt-videos-screen');
+const btnBackYt = document.getElementById('btn-back-yt-subjects');
+const ytDetailBanner = document.getElementById('yt-detail-banner');
+const ytDetailTitle = document.getElementById('yt-detail-title');
+const ytVideosContainer = document.getElementById('yt-videos-container');
+const btnSaveYtVideo = document.getElementById('btn-save-yt-video');
+const ytVideoUrlInput = document.getElementById('yt-video-url');
+const ytVideoTitleInput = document.getElementById('yt-video-title');
+
+// Modal del reproductor
+const modalYtPlayer = document.getElementById('modal-yt-player');
+const ytIframe = document.getElementById('yt-iframe');
+const btnCloseYtPlayer = document.getElementById('btn-close-yt-player');
+
+let activeYtSubject = null;
+let unsubscribeYtVideos = null;
+
+// Función para extraer el ID único de cualquier formato de enlace de YouTube (normal, corto o shorts)
+function extractYouTubeId(url) {
+  if (!url) return null;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(regExp);
+  return match ? match[1] : null;
+}
+
+// 1. Pintar las tarjetas con los mismos colores y orden de Asignaturas
+function renderYtClassroomCards() {
+  if (!ytGrid) return;
+  ytGrid.innerHTML = subjectsList.map((s) => `
+    <article class="classroom-card" style="background: ${s.color}; cursor: pointer;" onclick="openYtSubjectDetail('${s.id}')">
+      <div class="classroom-card-top">
+        <div>
+          <div class="classroom-card-title">${s.name}</div>
+          <div class="classroom-card-course">📺 Vídeos de estudio</div>
+        </div>
+        <span style="font-size: 1.3rem;">▶</span>
+      </div>
+      <div class="classroom-card-prof">${s.prof}</div>
+    </article>
+  `).join('');
+}
+
+// 2. Abrir la asignatura y escuchar sus vídeos en Firebase
+window.openYtSubjectDetail = function(subjectId) {
+  activeYtSubject = subjectsList.find(s => s.id === subjectId);
+  if (!activeYtSubject) return;
+
+  if (ytDetailTitle) ytDetailTitle.textContent = activeYtSubject.name;
+  if (ytDetailBanner) ytDetailBanner.style.background = activeYtSubject.color;
+
+  if (ytSubjectsScreen) ytSubjectsScreen.style.display = 'none';
+  if (ytVideosScreen) ytVideosScreen.style.display = 'block';
+
+  if (unsubscribeYtVideos) unsubscribeYtVideos();
+  unsubscribeYtVideos = db.collection('yt_' + activeYtSubject.id)
+    .orderBy('timestamp', 'desc')
+    .onSnapshot((snap) => {
+      const vids = [];
+      snap.forEach(doc => vids.push({ id: doc.id, ...doc.data() }));
+      renderYtVideos(vids);
+    });
+};
+
+if (btnBackYt) {
+  btnBackYt.addEventListener('click', () => {
+    if (ytVideosScreen) ytVideosScreen.style.display = 'none';
+    if (ytSubjectsScreen) ytSubjectsScreen.style.display = 'block';
+    if (unsubscribeYtVideos) unsubscribeYtVideos();
+    activeYtSubject = null;
+  });
+}
+
+// 3. Guardar vídeo con miniatura automática
+if (btnSaveYtVideo) {
+  btnSaveYtVideo.addEventListener('click', async () => {
+    const rawUrl = ytVideoUrlInput ? ytVideoUrlInput.value.trim() : '';
+    const videoId = extractYouTubeId(rawUrl);
+
+    if (!videoId) {
+      alert('Por favor, introduce un enlace válido de YouTube.');
+      return;
+    }
+
+    const title = ytVideoTitleInput && ytVideoTitleInput.value.trim() 
+      ? ytVideoTitleInput.value.trim() 
+      : 'Vídeo de estudio';
+
+    btnSaveYtVideo.disabled = true;
+    btnSaveYtVideo.textContent = 'Guardando...';
+
+    try {
+      await db.collection('yt_' + activeYtSubject.id).add({
+        videoId: videoId,
+        title: title,
+        thumbUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        timestamp: Date.now()
+      });
+
+      if (ytVideoUrlInput) ytVideoUrlInput.value = '';
+      if (ytVideoTitleInput) ytVideoTitleInput.value = '';
+    } catch (err) {
+      console.error('Error al guardar vídeo de YouTube:', err);
+      alert('No se pudo guardar el vídeo.');
+    } finally {
+      btnSaveYtVideo.disabled = false;
+      btnSaveYtVideo.textContent = '＋ Guardar vídeo en la materia';
+    }
+  });
+}
+
+// 4. Reproducir vídeo en el visor integrado (sin abrir la app de YouTube)
+window.playYtVideo = function(videoId) {
+  if (ytIframe && modalYtPlayer) {
+    ytIframe.src = `https://www.youtube-nocookie.com/embed/${videoId}?autoplay=1&rel=0`;
+    modalYtPlayer.style.display = 'flex';
+  }
+};
+
+function closeYtPlayer() {
+  if (modalYtPlayer && ytIframe) {
+    modalYtPlayer.style.display = 'none';
+    ytIframe.src = ''; // Corta la reproducción de inmediato al cerrar
+  }
+}
+
+if (btnCloseYtPlayer) btnCloseYtPlayer.addEventListener('click', closeYtPlayer);
+
+if (modalYtPlayer) {
+  modalYtPlayer.addEventListener('click', (e) => {
+    if (e.target === modalYtPlayer) closeYtPlayer();
+  });
+}
+
+// 5. Borrar vídeo
+window.deleteYtVideo = async function(e, id) {
+  e.stopPropagation();
+  if (confirm('¿Eliminar este vídeo de la asignatura?')) {
+    await db.collection('yt_' + activeYtSubject.id).doc(id).delete();
+  }
+};
+
+// 6. Dibujar la cuadrícula de vídeos con sus miniaturas
+function renderYtVideos(videos) {
+  if (!ytVideosContainer) return;
+  if (videos.length === 0) {
+    ytVideosContainer.innerHTML = `
+      <div class="placeholder-box" style="padding: 25px 10px;">
+        <p>🎬 No hay vídeos guardados en esta materia todavía.</p>
+        <p style="font-size: 0.8rem; margin-top: 4px;">Pega un enlace de YouTube arriba para añadirlo.</p>
+      </div>
+    `;
+    return;
+  }
+
+  ytVideosContainer.innerHTML = videos.map(v => `
+    <article class="yt-video-card">
+      <div class="yt-thumb-wrapper" onclick="playYtVideo('${v.videoId}')">
+        <img class="yt-thumb-img" src="${v.thumbUrl}" alt="${v.title}" loading="lazy">
+        <div class="yt-play-badge">▶</div>
+      </div>
+      <div class="yt-video-info">
+        <span class="yt-video-card-title">${v.title}</span>
+        <button class="btn-delete-note" onclick="deleteYtVideo(event, '${v.id}')">Eliminar</button>
+      </div>
     </article>
   `).join('');
 }

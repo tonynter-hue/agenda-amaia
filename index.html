@@ -10,7 +10,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#7c5dfa">
-  <link rel="stylesheet" href="estilos.css">
+  <link rel="stylesheet" href="estilos.css?v=2">
 </head>
 <body>
 
@@ -31,16 +31,18 @@
     </div>
   </header>
 
-  <!-- === TEMA HTML 3: BARRA DE PESTAÑAS === -->
+  <!-- === TEMA HTML 3: BARRA DE PESTAÑAS (NAVEGACIÓN DIRECTA) === -->
   <nav class="nav-pills-bar">
-    <button class="pill-btn active" data-target="view-agenda">AGENDA</button>
-    <button class="pill-btn" data-target="view-asignaturas">ASIGNATURAS</button>
-    <button class="pill-btn" data-target="view-youtube">YOUTUBE</button>
-    <button class="pill-btn" data-target="view-calendario">CALENDARIO</button>
+    <button class="pill-btn active" data-target="view-agenda" onclick="switchTab('view-agenda', this)">AGENDA</button>
+    <button class="pill-btn" data-target="view-asignaturas" onclick="switchTab('view-asignaturas', this)">ASIGNATURAS</button>
+    <button class="pill-btn" data-target="view-youtube" onclick="switchTab('view-youtube', this)">YOUTUBE</button>
+    <button class="pill-btn" data-target="view-calendario" onclick="switchTab('view-calendario', this)">CALENDARIO</button>
   </nav>
 
-  <!-- === TEMA HTML 4: VISTA AGENDA === -->
+  <!-- === TEMA HTML 4: CONTENEDOR PRINCIPAL === -->
   <main class="main-card">
+
+    <!-- 4.1 Vista Agenda -->
     <section id="view-agenda" class="view-panel active">
       <h2 class="section-title">AGENDA</h2>
       <button class="btn-add" id="open-form-btn"><span>＋</span> Añadir tarea o examen</button>
@@ -77,15 +79,13 @@
       <div class="task-list" id="task-list"></div>
     </section>
 
-    <!-- === TEMA HTML 5: VISTA ASIGNATURAS === -->
+    <!-- 4.2 Vista Asignaturas -->
     <section id="view-asignaturas" class="view-panel">
-      <!-- 5.1 Lista de tarjetas -->
       <div id="subjects-list-screen">
         <h2 class="section-title">MIS ASIGNATURAS</h2>
         <div class="classroom-grid" id="classroom-grid"></div>
       </div>
 
-      <!-- 5.2 Detalle y apuntes de la asignatura -->
       <div id="subject-detail-screen" style="display: none;">
         <button class="btn-back-subjects" id="btn-back-subjects">← Volver a asignaturas</button>
         <div class="subject-header-banner" id="detail-banner">
@@ -107,7 +107,7 @@
         <div class="subject-notes-list" id="subject-notes-list"></div>
       </div>
 
-      <!-- 5.3 Modal editar color y profesor -->
+      <!-- Modal editar materia -->
       <div id="modal-edit-subject" class="modal-overlay" style="display: none;">
         <div class="modal-card">
           <h3 class="modal-title">Personalizar Asignatura</h3>
@@ -140,22 +140,55 @@
         </div>
       </div>
 
-      <!-- 5.4 Visor de foto completa -->
+      <!-- Visor de foto ampliada -->
       <div id="modal-photo-viewer" class="photo-modal-overlay" style="display: none;">
         <button class="btn-close-photo" id="btn-close-photo">✕</button>
         <img id="modal-expanded-img" src="" alt="Foto">
       </div>
     </section>
 
-    <!-- === TEMA HTML 6: VISTAS YOUTUBE Y CALENDARIO === -->
+    <!-- 4.3 Vista YouTube -->
     <section id="view-youtube" class="view-panel">
-      <h2 class="section-title">YOUTUBE</h2>
-      <div class="placeholder-box">
-        <p>🎬 <b>Canal & Vídeos de Estudio</b></p>
-        <p>Próximo módulo a programar.</p>
+      <!-- Pantalla de asignaturas para YouTube -->
+      <div id="yt-subjects-screen">
+        <h2 class="section-title">VÍDEOS POR ASIGNATURA</h2>
+        <div class="classroom-grid" id="yt-classroom-grid"></div>
+      </div>
+
+      <!-- Pantalla de vídeos de la asignatura seleccionada -->
+      <div id="yt-videos-screen" style="display: none;">
+        <button class="btn-back-subjects" id="btn-back-yt-subjects">← Volver a asignaturas</button>
+        
+        <div class="subject-header-banner" id="yt-detail-banner">
+          <h2 id="yt-detail-title">Asignatura</h2>
+          <p id="yt-detail-subtitle">Vídeos y enlaces de estudio</p>
+        </div>
+
+        <div class="note-input-card">
+          <div class="form-group">
+            <label for="yt-video-url">Enlace del vídeo de YouTube</label>
+            <input type="url" id="yt-video-url" placeholder="Ej: https://youtu.be/... o https://youtube.com/watch?v=..." required>
+          </div>
+          <div class="form-group">
+            <label for="yt-video-title">Título o tema del vídeo (opcional)</label>
+            <input type="text" id="yt-video-title" placeholder="Ej: Explicación de las fracciones">
+          </div>
+          <button class="btn-save-note" id="btn-save-yt-video">＋ Guardar vídeo en la materia</button>
+        </div>
+
+        <div class="yt-video-grid" id="yt-videos-container"></div>
+      </div>
+
+      <!-- Reproductor integrado -->
+      <div id="modal-yt-player" class="photo-modal-overlay" style="display: none;">
+        <button class="btn-close-photo" id="btn-close-yt-player">✕</button>
+        <div class="yt-player-box">
+          <iframe id="yt-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
       </div>
     </section>
 
+    <!-- 4.4 Vista Calendario -->
     <section id="view-calendario" class="view-panel">
       <h2 class="section-title">CALENDARIO</h2>
       <div class="placeholder-box">
@@ -163,12 +196,13 @@
         <p>Próximo módulo a programar.</p>
       </div>
     </section>
+
   </main>
 
-  <!-- === TEMA HTML 7: LIBRERÍAS Y SCRIPTS === -->
+  <!-- === TEMA HTML 5: SCRIPTS Y LIBRERÍAS === -->
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
-  <script src="script.js"></script>
+  <script src="script.js?v=2"></script>
 </body>
 </html>

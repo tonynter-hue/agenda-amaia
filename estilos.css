@@ -640,3 +640,93 @@ input:focus, select:focus {
   object-fit: contain;
   border-radius: 8px;
 }
+/* ===================================================
+   TEMA CSS 7: VISTA YOUTUBE, MINIATURAS Y REPRODUCTOR
+   =================================================== */
+.yt-video-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.yt-video-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.yt-thumb-wrapper {
+  position: relative;
+  width: 100%;
+  padding-top: 56.25%; /* Proporción 16:9 */
+  background: #000000;
+  cursor: pointer;
+}
+
+.yt-thumb-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.yt-play-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 0, 0, 0.88);
+  color: white;
+  width: 52px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+  transition: transform 0.2s ease;
+}
+
+.yt-thumb-wrapper:active .yt-play-badge {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.yt-video-info {
+  padding: 12px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.yt-video-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  line-height: 1.3;
+}
+
+.yt-player-box {
+  width: 100%;
+  max-width: 650px;
+  position: relative;
+  padding-top: 56.25%; /* 16:9 */
+  background: black;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.yt-player-box iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
