@@ -26,7 +26,7 @@ if (menuDotsBtn && menuDropdown) {
   document.addEventListener('click', () => menuDropdown.classList.remove('show'));
 }
 
-// 1.3 Cambio de imagen de portada (con compresión ligera para memoria)
+// 1.3 Cambio de imagen de portada
 const heroHeader = document.getElementById('hero-header');
 const coverInput = document.getElementById('cover-input');
 const savedCover = localStorage.getItem('amaia_cover_image');
@@ -86,7 +86,6 @@ window.switchTab = function(targetId, btnElement) {
     activePanel.style.display = 'block';
   }
 
-  // Reiniciar a la lista principal al pulsar Asignaturas
   if (targetId === 'view-asignaturas') {
     const listScreen = document.getElementById('subjects-list-screen');
     const detailScreen = document.getElementById('subject-detail-screen');
@@ -95,7 +94,6 @@ window.switchTab = function(targetId, btnElement) {
     renderClassroomCards();
   }
 
-  // Reiniciar a la lista principal al pulsar YouTube
   if (targetId === 'view-youtube') {
     const ytList = document.getElementById('yt-subjects-screen');
     const ytVideos = document.getElementById('yt-videos-screen');
@@ -188,7 +186,7 @@ function renderTasks() {
 }
 
 /* ===================================================
-   TEMA JS 5: ASIGNATURAS Y ARRASTRAR (DRAG & DROP)
+   TEMA JS 5: ASIGNATURAS Y ARRASTRAR (DRAG & DROP TÁCTIL)
    =================================================== */
 const DEFAULT_SUBJECTS = [
   { id: 'frances', name: 'FRANCÉS 6ºB', course: '2026/2027', prof: 'María Sánchez González', color: 'linear-gradient(135deg, #1e3c72, #2a5298)' },
@@ -212,26 +210,46 @@ const PRESET_COLORS = [
   'linear-gradient(135deg, #2c3e50, #3498db)'
 ];
 
+// Carga inmediata de memoria local si existe
 let subjectsList = [...DEFAULT_SUBJECTS];
+const localOrder = localStorage.getItem('amaia_subjects_order');
+if (localOrder) {
+  try { subjectsList = JSON.parse(localOrder); } catch (e) {}
+}
+
 let activeSubject = null;
 let editingIndex = -1;
 let selectedColorValue = '';
+let sortableInstance = null;
 const classroomGrid = document.getElementById('classroom-grid');
 
+// Inicializar arrastre táctil infalible
 function initSortableDrag() {
   if (!classroomGrid || typeof Sortable === 'undefined') return;
-  new Sortable(classroomGrid, {
-    animation: 200,
-    delay: 150,
+  if (sortableInstance) sortableInstance.destroy();
+
+  sortableInstance = new Sortable(classroomGrid, {
+    animation: 250,
+    delay: 200,              // Mantener 200ms para diferenciar de un toque simple
     delayOnTouchOnly: true,
+    touchStartThreshold: 5,
     filter: '.btn-sub-menu',
     preventOnFilter: true,
     ghostClass: 'sortable-ghost',
     chosenClass: 'sortable-chosen',
-    onEnd: async (evt) => {
-      const moved = subjectsList.splice(evt.oldIndex, 1)[0];
-      subjectsList.splice(evt.newIndex, 0, moved);
-      await db.collection('config').doc('subjects_list').set({ items: subjectsList });
+    onEnd: function() {
+      // 1. Leer el orden REAL de las tarjetas en la pantalla tras soltar el dedo
+      const cardsInDOM = Array.from(classroomGrid.querySelectorAll('.classroom-card'));
+      const newOrderIds = cardsInDOM.map(card => card.getAttribute('data-id'));
+
+      // 2. Reordenar nuestro listado con esa misma secuencia
+      subjectsList = newOrderIds.map(id => subjectsList.find(s => s.id === id)).filter(Boolean);
+
+      // 3. Guardar en memoria local inmediata (nunca rebota)
+      localStorage.setItem('amaia_subjects_order', JSON.stringify(subjectsList));
+
+      // 4. Sincronizar en la nube
+      db.collection('config').doc('subjects_list').set({ items: subjectsList }).catch(err => console.error(err));
     }
   });
 }
@@ -239,7 +257,7 @@ function initSortableDrag() {
 function renderClassroomCards() {
   if (!classroomGrid) return;
   classroomGrid.innerHTML = subjectsList.map((s, i) => `
-    <article class="classroom-card" style="background: ${s.color}" onclick="openSubjectDetail('${s.id}')">
+    <article class="classroom-card" data-id="${s.id}" style="background: ${s.color}" onclick="openSubjectDetail('${s.id}')">
       <div class="classroom-card-top">
         <div>
           <div class="classroom-card-title">${s.name}</div>
@@ -255,16 +273,16 @@ function renderClassroomCards() {
 
 renderClassroomCards();
 
+// Sincronización en tiempo real desde Firebase
 db.collection('config').doc('subjects_list').onSnapshot((doc) => {
-  if (doc.exists && doc.data().items) {
+  if (doc.exists && doc.data().items && doc.data().items.length > 0) {
     subjectsList = doc.data().items;
-  } else {
-    db.collection('config').doc('subjects_list').set({ items: DEFAULT_SUBJECTS });
+    localStorage.setItem('amaia_subjects_order', JSON.stringify(subjectsList));
+    renderClassroomCards();
   }
-  renderClassroomCards();
 });
 
-// Modal de edición de asignatura
+// Modal de edición de materia
 const modalEdit = document.getElementById('modal-edit-subject');
 const formEdit = document.getElementById('form-edit-subject');
 const palette = document.getElementById('color-palette');
@@ -314,6 +332,8 @@ if (formEdit) {
       prof: document.getElementById('edit-sub-prof').value.trim(),
       color: selectedColorValue
     };
+    localStorage.setItem('amaia_subjects_order', JSON.stringify(subjectsList));
+    renderClassroomCards();
     await db.collection('config').doc('subjects_list').set({ items: subjectsList });
     if (modalEdit) modalEdit.style.display = 'none';
   });
