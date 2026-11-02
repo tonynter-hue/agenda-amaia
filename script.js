@@ -193,10 +193,10 @@ function renderTasks() {
 }
 
 /* ===================================================
-   TEMA JS 6: ASIGNATURAS Y APUNTES CON FOTOS
+   TEMA JS 6: ASIGNATURAS (EDICIÓN Y APUNTES EN FIREBASE)
    =================================================== */
-// 1. Datos iniciales con los profesores reales de su foto
-const SUBJECTS_DATA = [
+// 1. Datos iniciales de asignaturas
+const INITIAL_SUBJECTS = [
   { id: 'frances', name: 'FRANCÉS 6ºB', course: '2026/2027', prof: 'María Sánchez González', color: 'linear-gradient(135deg, #1e3c72, #2a5298)' },
   { id: 'valores', name: 'VALORES 6º', course: '2026/2027', prof: 'Mari Carmen Martín García', color: 'linear-gradient(135deg, #0d7065, #11998e)' },
   { id: 'ingles', name: 'ENGLISH GRADE 6B', course: '26-27', prof: 'Jesús Vallejo López', color: 'linear-gradient(135deg, #1f4068, #162447)' },
@@ -207,7 +207,9 @@ const SUBJECTS_DATA = [
   { id: 'att', name: 'ATT 6ºB', course: '2026/2027', prof: 'Profesor/a', color: 'linear-gradient(135deg, #2c3e50, #3498db)' }
 ];
 
+let currentSubjects = [...INITIAL_SUBJECTS];
 let activeSubject = null;
+let editingSubjectId = null;
 let currentSelectedPhotoBase64 = null;
 let unsubscribeNotes = null;
 
@@ -224,25 +226,85 @@ const photoPreviewName = document.getElementById('photo-preview-name');
 const btnSaveNote = document.getElementById('btn-save-note');
 const subjectNotesList = document.getElementById('subject-notes-list');
 
-// 2. Renderizar las tarjetas estilo Google Classroom
+// Elementos del Modal de Edición
+const modalEditSubject = document.getElementById('modal-edit-subject');
+const formEditSubject = document.getElementById('form-edit-subject');
+const editSubName = document.getElementById('edit-sub-name');
+const editSubCourse = document.getElementById('edit-sub-course');
+const editSubProf = document.getElementById('edit-sub-prof');
+const btnCancelEditSub = document.getElementById('btn-cancel-edit-sub');
+
+// 2. Escuchar cambios de asignaturas en Firebase (para que se sincronicen las ediciones)
+db.collection('subjects_info').onSnapshot((snapshot) => {
+  const customData = {};
+  snapshot.forEach(doc => {
+    customData[doc.id] = doc.data();
+  });
+
+  currentSubjects = INITIAL_SUBJECTS.map(sub => {
+    return customData[sub.id] ? { ...sub, ...customData[sub.id] } : sub;
+  });
+
+  renderClassroomCards();
+});
+
+// 3. Renderizar las tarjetas
 function renderClassroomCards() {
-  classroomGrid.innerHTML = SUBJECTS_DATA.map(sub => `
+  classroomGrid.innerHTML = currentSubjects.map(sub => `
     <article class="classroom-card" style="background: ${sub.color}" onclick="openSubjectDetail('${sub.id}')">
       <div class="classroom-card-top">
         <div>
           <div class="classroom-card-title">${sub.name}</div>
           <div class="classroom-card-course">${sub.course}</div>
         </div>
-        <span style="font-size: 1.2rem; opacity: 0.85;">⋮</span>
+        <button class="btn-sub-menu" onclick="openEditModal(event, '${sub.id}')" title="Editar">⋮</button>
       </div>
       <div class="classroom-card-prof">${sub.prof}</div>
     </article>
   `).join('');
 }
 
-// 3. Abrir la asignatura y escuchar notas de Firebase
+// 4. Modal para editar asignatura
+window.openEditModal = function(e, subId) {
+  e.stopPropagation(); // Evita abrir los apuntes de la materia
+  editingSubjectId = subId;
+  const sub = currentSubjects.find(s => s.id === subId);
+  if (!sub) return;
+
+  editSubName.value = sub.name;
+  editSubCourse.value = sub.course;
+  editSubProf.value = sub.prof;
+
+  modalEditSubject.style.display = 'flex';
+};
+
+btnCancelEditSub.addEventListener('click', () => {
+  modalEditSubject.style.display = 'none';
+  editingSubjectId = null;
+});
+
+formEditSubject.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!editingSubjectId) return;
+
+  const updatedData = {
+    name: editSubName.value.trim(),
+    course: editSubCourse.value.trim(),
+    prof: editSubProf.value.trim()
+  };
+
+  try {
+    await db.collection('subjects_info').doc(editingSubjectId).set(updatedData, { merge: true });
+    modalEditSubject.style.display = 'none';
+    editingSubjectId = null;
+  } catch (err) {
+    console.error("Error al actualizar la asignatura:", err);
+  }
+});
+
+// 5. Abrir la asignatura y ver notas
 window.openSubjectDetail = function(subjectId) {
-  activeSubject = SUBJECTS_DATA.find(s => s.id === subjectId);
+  activeSubject = currentSubjects.find(s => s.id === subjectId);
   if (!activeSubject) return;
 
   detailTitle.textContent = activeSubject.name;
@@ -252,7 +314,6 @@ window.openSubjectDetail = function(subjectId) {
   subjectsListScreen.style.display = 'none';
   subjectDetailScreen.style.display = 'block';
 
-  // Suscribirse en tiempo real a las notas de esta asignatura
   if (unsubscribeNotes) unsubscribeNotes();
   unsubscribeNotes = db.collection('subjects_notes')
     .where('subjectId', '==', activeSubject.id)
@@ -264,7 +325,6 @@ window.openSubjectDetail = function(subjectId) {
     });
 };
 
-// 4. Volver a la lista
 btnBackSubjects.addEventListener('click', () => {
   subjectDetailScreen.style.display = 'none';
   subjectsListScreen.style.display = 'block';
@@ -272,7 +332,7 @@ btnBackSubjects.addEventListener('click', () => {
   activeSubject = null;
 });
 
-// 5. Comprimir foto para optimizar carga y Firestore
+// 6. Optimización y compresión de fotos
 notePhotoInput.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
@@ -285,7 +345,7 @@ notePhotoInput.addEventListener('change', (e) => {
       const maxDim = 900;
       let w = img.width, h = img.height;
       if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
-      else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+      else if (h > maxDim) { h = Math.round((h * maxDim) / h); h = maxDim; }
 
       canvas.width = w; canvas.height = h;
       const ctx = canvas.getContext('2d');
@@ -298,7 +358,7 @@ notePhotoInput.addEventListener('change', (e) => {
   reader.readAsDataURL(file);
 });
 
-// 6. Guardar apunte en Firebase
+// 7. Guardar apunte
 btnSaveNote.addEventListener('click', async () => {
   const text = noteTextInput.value.trim();
   if (!text && !currentSelectedPhotoBase64) {
@@ -330,14 +390,14 @@ btnSaveNote.addEventListener('click', async () => {
   }
 });
 
-// 7. Borrar nota
+// 8. Borrar apunte
 window.deleteNote = async function(noteId) {
   if (confirm('¿Eliminar este apunte?')) {
     await db.collection('subjects_notes').doc(noteId).delete();
   }
 };
 
-// 8. Pintar notas en pantalla
+// 9. Pintar apuntes
 function renderSubjectNotes(notes) {
   if (notes.length === 0) {
     subjectNotesList.innerHTML = `
@@ -360,6 +420,3 @@ function renderSubjectNotes(notes) {
     </article>
   `).join('');
 }
-
-// Inicializar tarjetas
-renderClassroomCards();

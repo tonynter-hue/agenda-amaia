@@ -98,11 +98,11 @@
       <div id="subjects-list-screen">
         <h2 class="section-title">MIS ASIGNATURAS</h2>
         <div class="classroom-grid" id="classroom-grid">
-          <!-- Las tarjetas de asignaturas se dibujan dinámicamente -->
+          <!-- Tarjetas generadas dinámicamente -->
         </div>
       </div>
 
-      <!-- 2. Pantalla detalle de la asignatura (al pulsar una tarjeta) -->
+      <!-- 2. Pantalla detalle de la asignatura -->
       <div id="subject-detail-screen" class="subject-detail" style="display: none;">
         <button class="btn-back-subjects" id="btn-back-subjects">← Volver a asignaturas</button>
         
@@ -111,7 +111,6 @@
           <p id="detail-course-prof">Curso • Profesor</p>
         </div>
 
-        <!-- Formulario para apuntar notas o fotos -->
         <div class="note-input-card">
           <textarea id="note-text" placeholder="Escribe un apunte, resumen o deberes..." rows="3"></textarea>
           
@@ -126,28 +125,32 @@
           <button class="btn-save-note" id="btn-save-note">Publicar en la asignatura</button>
         </div>
 
-        <!-- Historial de notas y fotos guardadas -->
-        <div class="subject-notes-list" id="subject-notes-list">
-          <!-- Se cargan en tiempo real desde Firebase -->
+        <div class="subject-notes-list" id="subject-notes-list"></div>
+      </div>
+
+      <!-- 3. Ventana emergente (Modal) para editar Asignatura -->
+      <div id="modal-edit-subject" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+          <h3 class="modal-title">Editar Asignatura</h3>
+          <form id="form-edit-subject">
+            <div class="form-group">
+              <label for="edit-sub-name">Nombre de la asignatura</label>
+              <input type="text" id="edit-sub-name" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-sub-course">Curso / Año</label>
+              <input type="text" id="edit-sub-course" required>
+            </div>
+            <div class="form-group">
+              <label for="edit-sub-prof">Nombre del Profesor/a</label>
+              <input type="text" id="edit-sub-prof" required>
+            </div>
+            <div class="form-actions">
+              <button type="button" class="btn-cancel" id="btn-cancel-edit-sub">Cancelar</button>
+              <button type="submit" class="btn-save">Guardar cambios</button>
+            </div>
+          </form>
         </div>
-      </div>
-    </section>>
-
-    <!-- Subtema: Vista YouTube -->
-    <section id="view-youtube" class="view-panel">
-      <h2 class="section-title">YOUTUBE</h2>
-      <div class="placeholder-box">
-        <p>🎬 <b>Canal & Vídeos de Estudio</b></p>
-        <p>Aquí incrustaremos sus vídeos, música de estudio y accesos directos.</p>
-      </div>
-    </section>
-
-    <!-- Subtema: Vista Calendario -->
-    <section id="view-calendario" class="view-panel">
-      <h2 class="section-title">CALENDARIO</h2>
-      <div class="placeholder-box">
-        <p>🗓️ <b>Calendario Escolar</b></p>
-        <p>Vista mensual de exámenes y entregas importantes.</p>
       </div>
     </section>
 

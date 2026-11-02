@@ -353,7 +353,7 @@ input:focus, select:focus {
 }
 
 /* ===================================================
-   TEMA CSS 6: VISTA ASIGNATURAS ESTILO CLASSROOM
+   TEMA CSS 6: VISTA ASIGNATURAS ESTILO CLASSROOM Y EDICIÓN
    =================================================== */
 .classroom-grid {
   display: flex;
@@ -369,7 +369,7 @@ input:focus, select:focus {
   overflow: hidden;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.15s ease;
   min-height: 105px;
   display: flex;
   flex-direction: column;
@@ -398,11 +398,56 @@ input:focus, select:focus {
   margin-top: 2px;
 }
 
+.btn-sub-menu {
+  background: rgba(0, 0, 0, 0.25);
+  border: none;
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+}
+
 .classroom-card-prof {
   font-size: 0.82rem;
   font-weight: 600;
   opacity: 0.95;
   margin-top: 10px;
+}
+
+/* Modal de edición */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal-card {
+  background: white;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+}
+
+.modal-title {
+  font-size: 1.2rem;
+  font-weight: 800;
+  margin-bottom: 16px;
+  color: var(--text-dark);
 }
 
 /* Pantalla de detalle de la asignatura */
@@ -498,7 +543,6 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
-/* Listado de notas y fotos publicadas */
 .subject-notes-list {
   display: flex;
   flex-direction: column;
