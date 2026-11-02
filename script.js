@@ -86,6 +86,7 @@ window.switchTab = function(targetId, btnElement) {
     activePanel.style.display = 'block';
   }
 
+  // Reiniciar a la lista principal al pulsar Asignaturas
   if (targetId === 'view-asignaturas') {
     const listScreen = document.getElementById('subjects-list-screen');
     const detailScreen = document.getElementById('subject-detail-screen');
@@ -94,12 +95,18 @@ window.switchTab = function(targetId, btnElement) {
     renderClassroomCards();
   }
 
+  // Reiniciar a la lista principal al pulsar YouTube
   if (targetId === 'view-youtube') {
     const ytList = document.getElementById('yt-subjects-screen');
     const ytVideos = document.getElementById('yt-videos-screen');
     if (ytList) ytList.style.display = 'block';
     if (ytVideos) ytVideos.style.display = 'none';
     renderYtClassroomCards();
+  }
+
+  // Dibujar el calendario escolar al pulsar Calendario
+  if (targetId === 'view-calendario') {
+    renderCalendar();
   }
 };
 
@@ -625,4 +632,129 @@ function renderYtVideos(videos) {
       </div>
     </article>
   `).join('');
+}
+
+/* ===================================================
+   TEMA JS 8: CALENDARIO ESCOLAR (SINCRONIZADO CON TAREAS)
+   =================================================== */
+let currentCalDate = new Date();
+let selectedDateStr = new Date().toISOString().split('T')[0];
+
+const calMonthYear = document.getElementById('cal-month-year');
+const calDaysGrid = document.getElementById('cal-days-grid');
+const calSelectedDateText = document.getElementById('cal-selected-date-text');
+const calDayTasksList = document.getElementById('cal-day-tasks-list');
+const calPrevBtn = document.getElementById('cal-prev-month');
+const calNextBtn = document.getElementById('cal-next-month');
+const calTodayBtn = document.getElementById('cal-today-btn');
+
+function getSubjectColor(subjectName) {
+  const norm = (subjectName || '').toLowerCase().trim();
+  const found = subjectsList.find(s => s.name.toLowerCase().includes(norm) || norm.includes(s.name.toLowerCase()));
+  return found ? found.color : 'linear-gradient(135deg, #7c5dfa, #6a49f2)';
+}
+
+function renderCalendar() {
+  if (!calDaysGrid || !calMonthYear) return;
+
+  const year = currentCalDate.getFullYear();
+  const month = currentCalDate.getMonth();
+
+  // Nombre de mes y año
+  calMonthYear.textContent = new Intl.DateTimeFormat('es-ES', { month: 'long', year: 'numeric' }).format(currentCalDate);
+
+  // Primer día del mes y total de días
+  const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Lunes = 0
+  const totalDays = new Date(year, month + 1, 0).getDate();
+  const prevMonthTotalDays = new Date(year, month, 0).getDate();
+
+  const todayStr = new Date().toISOString().split('T')[0];
+  let html = '';
+
+  // Días del mes anterior para rellenar
+  for (let i = firstDayIndex - 1; i >= 0; i--) {
+    const dayNum = prevMonthTotalDays - i;
+    html += `<div class="cal-day-cell other-month"><span class="cal-day-number">${dayNum}</span></div>`;
+  }
+
+  // Días del mes actual
+  for (let day = 1; day <= totalDays; day++) {
+    const monthStr = String(month + 1).padStart(2, '0');
+    const dayPad = String(day).padStart(2, '0');
+    const dateStr = `${year}-${monthStr}-${dayPad}`;
+
+    const isToday = dateStr === todayStr ? 'today' : '';
+    const isSelected = dateStr === selectedDateStr ? 'selected' : '';
+
+    // Buscar tareas asociadas a esta fecha
+    const dayTasks = tasks.filter(t => t.dueDate === dateStr);
+    const dotsHtml = dayTasks.slice(0, 3).map(t => {
+      return `<span class="cal-task-dot" style="background: ${getSubjectColor(t.subject)}"></span>`;
+    }).join('');
+
+    html += `
+      <div class="cal-day-cell ${isToday} ${isSelected}" onclick="selectCalendarDate('${dateStr}')">
+        <span class="cal-day-number">${day}</span>
+        <div class="cal-task-dots">${dotsHtml}</div>
+      </div>
+    `;
+  }
+
+  calDaysGrid.innerHTML = html;
+  renderSelectedDayTasks();
+}
+
+window.selectCalendarDate = function(dateStr) {
+  selectedDateStr = dateStr;
+  renderCalendar();
+};
+
+function renderSelectedDayTasks() {
+  if (!calSelectedDateText || !calDayTasksList) return;
+
+  const parts = selectedDateStr.split('-');
+  const dateObj = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+  calSelectedDateText.textContent = dateObj.toLocaleDateString('es-ES', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long'
+  });
+
+  const dayTasks = tasks.filter(t => t.dueDate === selectedDateStr);
+
+  if (dayTasks.length === 0) {
+    calDayTasksList.innerHTML = `<p style="font-size: 0.85rem; color: var(--text-muted); text-align: center; padding: 10px 0;">🎉 No hay tareas ni exámenes para este día.</p>`;
+    return;
+  }
+
+  calDayTasksList.innerHTML = dayTasks.map(t => `
+    <div class="cal-task-entry ${t.completed ? 'completed' : ''}">
+      <span class="cal-task-badge" style="background: ${getSubjectColor(t.subject)}">${t.subject}</span>
+      <span class="cal-task-desc">${t.title}</span>
+      <input type="checkbox" class="task-checkbox" ${t.completed ? 'checked' : ''} onchange="toggleTask(${t.id})">
+    </div>
+  `).join('');
+}
+
+// Navegación de meses
+if (calPrevBtn) {
+  calPrevBtn.addEventListener('click', () => {
+    currentCalDate.setMonth(currentCalDate.getMonth() - 1);
+    renderCalendar();
+  });
+}
+
+if (calNextBtn) {
+  calNextBtn.addEventListener('click', () => {
+    currentCalDate.setMonth(currentCalDate.getMonth() + 1);
+    renderCalendar();
+  });
+}
+
+if (calTodayBtn) {
+  calTodayBtn.addEventListener('click', () => {
+    currentCalDate = new Date();
+    selectedDateStr = new Date().toISOString().split('T')[0];
+    renderCalendar();
+  });
 }

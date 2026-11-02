@@ -190,10 +190,28 @@
 
     <!-- 4.4 Vista Calendario -->
     <section id="view-calendario" class="view-panel">
-      <h2 class="section-title">CALENDARIO</h2>
-      <div class="placeholder-box">
-        <p>🗓️ <b>Calendario Escolar</b></p>
-        <p>Próximo módulo a programar.</p>
+      <!-- Cabecera estilo Google Calendar -->
+      <div class="calendar-header">
+        <button class="btn-cal-nav" id="cal-prev-month" aria-label="Mes anterior">‹</button>
+        <div class="cal-title-box">
+          <h2 id="cal-month-year">Mes Año</h2>
+          <button class="btn-cal-today" id="cal-today-btn">Hoy</button>
+        </div>
+        <button class="btn-cal-nav" id="cal-next-month" aria-label="Mes siguiente">›</button>
+      </div>
+
+      <!-- Días de la semana -->
+      <div class="cal-weekdays">
+        <span>L</span><span>M</span><span>X</span><span>J</span><span>V</span><span>S</span><span>D</span>
+      </div>
+
+      <!-- Rejilla de días del mes -->
+      <div class="cal-grid" id="cal-days-grid"></div>
+
+      <!-- Lista de tareas del día pulsado -->
+      <div class="cal-selected-day-card">
+        <h3 class="cal-day-title" id="cal-selected-date-text">Selecciona un día</h3>
+        <div class="cal-day-tasks" id="cal-day-tasks-list"></div>
       </div>
     </section>
 
