@@ -46,7 +46,7 @@
   <!-- === TEMA HTML 4: CONTENEDOR Y VISTAS === -->
   <main class="main-card">
 
-    <!-- Subtema: Vista Agenda -->
+    <!-- Subtema 4.1: Vista Agenda -->
     <section id="view-agenda" class="view-panel active">
       <h2 class="section-title">AGENDA</h2>
 
@@ -92,17 +92,15 @@
       <div class="task-list" id="task-list"></div>
     </section>
 
-    <!-- Subtema: Vista Asignaturas -->
+    <!-- Subtema 4.2: Vista Asignaturas -->
     <section id="view-asignaturas" class="view-panel">
-      <!-- 1. Pantalla de tarjetas principales -->
+      <!-- Pantalla de tarjetas principales -->
       <div id="subjects-list-screen">
         <h2 class="section-title">MIS ASIGNATURAS</h2>
-        <div class="classroom-grid" id="classroom-grid">
-          <!-- Tarjetas generadas dinámicamente -->
-        </div>
+        <div class="classroom-grid" id="classroom-grid"></div>
       </div>
 
-      <!-- 2. Pantalla detalle de la asignatura -->
+      <!-- Pantalla detalle de la asignatura -->
       <div id="subject-detail-screen" class="subject-detail" style="display: none;">
         <button class="btn-back-subjects" id="btn-back-subjects">← Volver a asignaturas</button>
         
@@ -125,10 +123,11 @@
           <button class="btn-save-note" id="btn-save-note">Publicar en la asignatura</button>
         </div>
 
+        <!-- Historial de notas y fotos -->
         <div class="subject-notes-list" id="subject-notes-list"></div>
       </div>
 
-      <!-- 3. Ventana emergente (Modal) para editar Asignatura -->
+      <!-- Modal para editar Asignatura -->
       <div id="modal-edit-subject" class="modal-overlay" style="display: none;">
         <div class="modal-card">
           <h3 class="modal-title">Editar Asignatura</h3>
@@ -151,6 +150,30 @@
             </div>
           </form>
         </div>
+      </div>
+
+      <!-- Modal Visor de fotos a pantalla completa -->
+      <div id="modal-photo-viewer" class="photo-modal-overlay" style="display: none;">
+        <button class="btn-close-photo" id="btn-close-photo">✕</button>
+        <img id="modal-expanded-img" src="" alt="Foto ampliada">
+      </div>
+    </section>
+
+    <!-- Subtema 4.3: Vista YouTube -->
+    <section id="view-youtube" class="view-panel">
+      <h2 class="section-title">YOUTUBE</h2>
+      <div class="placeholder-box">
+        <p>🎬 <b>Canal & Vídeos de Estudio</b></p>
+        <p>Aquí incrustaremos sus vídeos, música de estudio y accesos directos.</p>
+      </div>
+    </section>
+
+    <!-- Subtema 4.4: Vista Calendario -->
+    <section id="view-calendario" class="view-panel">
+      <h2 class="section-title">CALENDARIO</h2>
+      <div class="placeholder-box">
+        <p>🗓️ <b>Calendario Escolar</b></p>
+        <p>Vista mensual de exámenes y entregas importantes.</p>
       </div>
     </section>
 
