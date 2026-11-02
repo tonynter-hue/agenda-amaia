@@ -191,3 +191,175 @@ function renderTasks() {
     `;
   }).join('');
 }
+
+/* ===================================================
+   TEMA JS 6: ASIGNATURAS Y APUNTES CON FOTOS
+   =================================================== */
+// 1. Datos iniciales con los profesores reales de su foto
+const SUBJECTS_DATA = [
+  { id: 'frances', name: 'FRANCÉS 6ºB', course: '2026/2027', prof: 'María Sánchez González', color: 'linear-gradient(135deg, #1e3c72, #2a5298)' },
+  { id: 'valores', name: 'VALORES 6º', course: '2026/2027', prof: 'Mari Carmen Martín García', color: 'linear-gradient(135deg, #0d7065, #11998e)' },
+  { id: 'ingles', name: 'ENGLISH GRADE 6B', course: '26-27', prof: 'Jesús Vallejo López', color: 'linear-gradient(135deg, #1f4068, #162447)' },
+  { id: 'ciencias', name: 'SCIENCE GRADE 6B', course: '26-27', prof: 'Jesús Vallejo López', color: 'linear-gradient(135deg, #592576, #3f1a56)' },
+  { id: 'matematicas', name: 'MATEMÁTICAS 6ºB', course: '2026/2027', prof: 'Tutor/a', color: 'linear-gradient(135deg, #e65c00, #f9d423)' },
+  { id: 'lengua', name: 'LENGUA 6ºB', course: '2026/2027', prof: 'Tutor/a', color: 'linear-gradient(135deg, #c0392b, #8e44ad)' },
+  { id: 'plastica', name: 'PLÁSTICA 6ºB', course: '2026/2027', prof: 'Profesor/a', color: 'linear-gradient(135deg, #f39c12, #d35400)' },
+  { id: 'att', name: 'ATT 6ºB', course: '2026/2027', prof: 'Profesor/a', color: 'linear-gradient(135deg, #2c3e50, #3498db)' }
+];
+
+let activeSubject = null;
+let currentSelectedPhotoBase64 = null;
+let unsubscribeNotes = null;
+
+const classroomGrid = document.getElementById('classroom-grid');
+const subjectsListScreen = document.getElementById('subjects-list-screen');
+const subjectDetailScreen = document.getElementById('subject-detail-screen');
+const btnBackSubjects = document.getElementById('btn-back-subjects');
+const detailBanner = document.getElementById('detail-banner');
+const detailTitle = document.getElementById('detail-title');
+const detailCourseProf = document.getElementById('detail-course-prof');
+const noteTextInput = document.getElementById('note-text');
+const notePhotoInput = document.getElementById('note-photo-input');
+const photoPreviewName = document.getElementById('photo-preview-name');
+const btnSaveNote = document.getElementById('btn-save-note');
+const subjectNotesList = document.getElementById('subject-notes-list');
+
+// 2. Renderizar las tarjetas estilo Google Classroom
+function renderClassroomCards() {
+  classroomGrid.innerHTML = SUBJECTS_DATA.map(sub => `
+    <article class="classroom-card" style="background: ${sub.color}" onclick="openSubjectDetail('${sub.id}')">
+      <div class="classroom-card-top">
+        <div>
+          <div class="classroom-card-title">${sub.name}</div>
+          <div class="classroom-card-course">${sub.course}</div>
+        </div>
+        <span style="font-size: 1.2rem; opacity: 0.85;">⋮</span>
+      </div>
+      <div class="classroom-card-prof">${sub.prof}</div>
+    </article>
+  `).join('');
+}
+
+// 3. Abrir la asignatura y escuchar notas de Firebase
+window.openSubjectDetail = function(subjectId) {
+  activeSubject = SUBJECTS_DATA.find(s => s.id === subjectId);
+  if (!activeSubject) return;
+
+  detailTitle.textContent = activeSubject.name;
+  detailCourseProf.textContent = `${activeSubject.course} • ${activeSubject.prof}`;
+  detailBanner.style.background = activeSubject.color;
+
+  subjectsListScreen.style.display = 'none';
+  subjectDetailScreen.style.display = 'block';
+
+  // Suscribirse en tiempo real a las notas de esta asignatura
+  if (unsubscribeNotes) unsubscribeNotes();
+  unsubscribeNotes = db.collection('subjects_notes')
+    .where('subjectId', '==', activeSubject.id)
+    .orderBy('timestamp', 'desc')
+    .onSnapshot((snapshot) => {
+      const notes = [];
+      snapshot.forEach(doc => notes.push({ id: doc.id, ...doc.data() }));
+      renderSubjectNotes(notes);
+    });
+};
+
+// 4. Volver a la lista
+btnBackSubjects.addEventListener('click', () => {
+  subjectDetailScreen.style.display = 'none';
+  subjectsListScreen.style.display = 'block';
+  if (unsubscribeNotes) unsubscribeNotes();
+  activeSubject = null;
+});
+
+// 5. Comprimir foto para optimizar carga y Firestore
+notePhotoInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 900;
+      let w = img.width, h = img.height;
+      if (w > h && w > maxDim) { h = Math.round((h * maxDim) / w); w = maxDim; }
+      else if (h > maxDim) { w = Math.round((w * maxDim) / h); h = maxDim; }
+
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      currentSelectedPhotoBase64 = canvas.toDataURL('image/jpeg', 0.65);
+      photoPreviewName.style.display = 'inline';
+    };
+    img.src = event.target.result;
+  };
+  reader.readAsDataURL(file);
+});
+
+// 6. Guardar apunte en Firebase
+btnSaveNote.addEventListener('click', async () => {
+  const text = noteTextInput.value.trim();
+  if (!text && !currentSelectedPhotoBase64) {
+    alert('Escribe algo o adjunta una foto antes de publicar.');
+    return;
+  }
+
+  btnSaveNote.disabled = true;
+  btnSaveNote.textContent = 'Guardando...';
+
+  try {
+    await db.collection('subjects_notes').add({
+      subjectId: activeSubject.id,
+      text: text,
+      photo: currentSelectedPhotoBase64 || null,
+      dateString: new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }),
+      timestamp: Date.now()
+    });
+
+    noteTextInput.value = '';
+    currentSelectedPhotoBase64 = null;
+    notePhotoInput.value = '';
+    photoPreviewName.style.display = 'none';
+  } catch (err) {
+    console.error('Error al guardar nota:', err);
+  } finally {
+    btnSaveNote.disabled = false;
+    btnSaveNote.textContent = 'Publicar en la asignatura';
+  }
+});
+
+// 7. Borrar nota
+window.deleteNote = async function(noteId) {
+  if (confirm('¿Eliminar este apunte?')) {
+    await db.collection('subjects_notes').doc(noteId).delete();
+  }
+};
+
+// 8. Pintar notas en pantalla
+function renderSubjectNotes(notes) {
+  if (notes.length === 0) {
+    subjectNotesList.innerHTML = `
+      <div class="placeholder-box" style="padding: 25px 10px;">
+        <p>📝 Todavía no hay apuntes ni fotos en esta materia.</p>
+        <p style="font-size: 0.8rem; margin-top: 4px;">Usa el recuadro superior para subir deberes o fotos de la pizarra.</p>
+      </div>
+    `;
+    return;
+  }
+
+  subjectNotesList.innerHTML = notes.map(note => `
+    <article class="note-entry-card">
+      <div class="note-entry-header">
+        <span>📅 ${note.dateString}</span>
+        <button onclick="deleteNote('${note.id}')" style="background:none;border:none;color:#ef4444;cursor:pointer;font-weight:bold;">✕</button>
+      </div>
+      ${note.text ? `<div class="note-entry-text">${note.text}</div>` : ''}
+      ${note.photo ? `<img src="${note.photo}" class="note-entry-img" alt="Foto adjunta" loading="lazy">` : ''}
+    </article>
+  `).join('');
+}
+
+// Inicializar tarjetas
+renderClassroomCards();

@@ -94,12 +94,44 @@
 
     <!-- Subtema: Vista Asignaturas -->
     <section id="view-asignaturas" class="view-panel">
-      <h2 class="section-title">ASIGNATURAS</h2>
-      <div class="placeholder-box">
-        <p>📚 <b>Tus Asignaturas</b></p>
-        <p>Aquí gestionaremos temas, apuntes y notas trimestrales.</p>
+      <!-- 1. Pantalla de tarjetas principales -->
+      <div id="subjects-list-screen">
+        <h2 class="section-title">MIS ASIGNATURAS</h2>
+        <div class="classroom-grid" id="classroom-grid">
+          <!-- Las tarjetas de asignaturas se dibujan dinámicamente -->
+        </div>
       </div>
-    </section>
+
+      <!-- 2. Pantalla detalle de la asignatura (al pulsar una tarjeta) -->
+      <div id="subject-detail-screen" class="subject-detail" style="display: none;">
+        <button class="btn-back-subjects" id="btn-back-subjects">← Volver a asignaturas</button>
+        
+        <div class="subject-header-banner" id="detail-banner">
+          <h2 id="detail-title">Nombre Asignatura</h2>
+          <p id="detail-course-prof">Curso • Profesor</p>
+        </div>
+
+        <!-- Formulario para apuntar notas o fotos -->
+        <div class="note-input-card">
+          <textarea id="note-text" placeholder="Escribe un apunte, resumen o deberes..." rows="3"></textarea>
+          
+          <div class="note-attach-bar">
+            <label class="btn-photo-attach" for="note-photo-input">
+              📷 <span>Añadir foto de pizarra o cuaderno</span>
+            </label>
+            <input type="file" id="note-photo-input" accept="image/*" capture="environment" style="display:none;">
+            <span id="photo-preview-name" class="photo-badge" style="display: none;">Foto lista ✓</span>
+          </div>
+
+          <button class="btn-save-note" id="btn-save-note">Publicar en la asignatura</button>
+        </div>
+
+        <!-- Historial de notas y fotos guardadas -->
+        <div class="subject-notes-list" id="subject-notes-list">
+          <!-- Se cargan en tiempo real desde Firebase -->
+        </div>
+      </div>
+    </section>>
 
     <!-- Subtema: Vista YouTube -->
     <section id="view-youtube" class="view-panel">
